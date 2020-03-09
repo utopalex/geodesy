@@ -7,7 +7,7 @@
 
 import Dms from './dms.js';
 
-const π = Math.PI;
+const pi = Math.PI;
 
 
 /**
@@ -21,7 +21,7 @@ const π = Math.PI;
  * @module latlon-spherical
  */
 
-// note greek letters (e.g. φ, λ, θ) are used for angles in radians to distinguish from angles in
+// note greek letters (e.g. phi, lambda, theta) are used for angles in radians to distinguish from angles in
 // degrees (e.g. lat, lon, brng)
 
 
@@ -171,7 +171,7 @@ class LatLonSpherical {
     /**
      * Returns the distance along the surface of the earth from ‘this’ point to destination point.
      *
-     * Uses haversine formula: a = sin²(Δφ/2) + cosφ1·cosφ2 · sin²(Δλ/2); d = 2 · atan2(√a, √(a-1)).
+     * Uses haversine formula: a = sin²(deltaphi/2) + cosphi1·cosphi2 · sin²(deltalambda/2); d = 2 · atan2(√a, √(a-1)).
      *
      * @param   {LatLon} point - Latitude/longitude of destination point.
      * @param   {number} [radius=6371e3] - Radius of earth (defaults to mean radius in metres).
@@ -188,17 +188,17 @@ class LatLonSpherical {
         if (!(point instanceof LatLonSpherical)) point = LatLonSpherical.parse(point); // allow literal forms
         if (isNaN(radius)) throw new TypeError(`invalid radius ‘${radius}’`);
 
-        // a = sin²(Δφ/2) + cos(φ1)⋅cos(φ2)⋅sin²(Δλ/2)
-        // δ = 2·atan2(√(a), √(1−a))
+        // a = sin²(deltaphi/2) + cos(phi1)⋅cos(phi2)⋅sin²(deltalambda/2)
+        // delta = 2·atan2(√(a), √(1−a))
         // see mathforum.org/library/drmath/view/51879.html for derivation
 
         const R = radius;
-        const φ1 = this.lat.toRadians(),  λ1 = this.lon.toRadians();
-        const φ2 = point.lat.toRadians(), λ2 = point.lon.toRadians();
-        const Δφ = φ2 - φ1;
-        const Δλ = λ2 - λ1;
+        const phi1 = this.lat.toRadians(),  lambda1 = this.lon.toRadians();
+        const phi2 = point.lat.toRadians(), lambda2 = point.lon.toRadians();
+        const deltaphi = phi2 - phi1;
+        const deltalambda = lambda2 - lambda1;
 
-        const a = Math.sin(Δφ/2)*Math.sin(Δφ/2) + Math.cos(φ1)*Math.cos(φ2) * Math.sin(Δλ/2)*Math.sin(Δλ/2);
+        const a = Math.sin(deltaphi/2)*Math.sin(deltaphi/2) + Math.cos(phi1)*Math.cos(phi2) * Math.sin(deltalambda/2)*Math.sin(deltalambda/2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         const d = R * c;
 
@@ -221,18 +221,18 @@ class LatLonSpherical {
         if (!(point instanceof LatLonSpherical)) point = LatLonSpherical.parse(point); // allow literal forms
         if (this.equals(point)) return NaN; // coincident points
 
-        // tanθ = sinΔλ⋅cosφ2 / cosφ1⋅sinφ2 − sinφ1⋅cosφ2⋅cosΔλ
+        // tantheta = sindeltalambda⋅cosphi2 / cosphi1⋅sinphi2 − sinphi1⋅cosphi2⋅cosdeltalambda
         // see mathforum.org/library/drmath/view/55417.html for derivation
 
-        const φ1 = this.lat.toRadians();
-        const φ2 = point.lat.toRadians();
-        const Δλ = (point.lon - this.lon).toRadians();
+        const phi1 = this.lat.toRadians();
+        const phi2 = point.lat.toRadians();
+        const deltalambda = (point.lon - this.lon).toRadians();
 
-        const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
-        const y = Math.sin(Δλ) * Math.cos(φ2);
-        const θ = Math.atan2(y, x);
+        const x = Math.cos(phi1) * Math.sin(phi2) - Math.sin(phi1) * Math.cos(phi2) * Math.cos(deltalambda);
+        const y = Math.sin(deltalambda) * Math.cos(phi2);
+        const theta = Math.atan2(y, x);
 
-        const bearing = θ.toDegrees();
+        const bearing = theta.toDegrees();
 
         return Dms.wrap360(bearing);
     }
@@ -275,27 +275,27 @@ class LatLonSpherical {
     midpointTo(point) {
         if (!(point instanceof LatLonSpherical)) point = LatLonSpherical.parse(point); // allow literal forms
 
-        // φm = atan2( sinφ1 + sinφ2, √( (cosφ1 + cosφ2⋅cosΔλ)² + cos²φ2⋅sin²Δλ ) )
-        // λm = λ1 + atan2(cosφ2⋅sinΔλ, cosφ1 + cosφ2⋅cosΔλ)
+        // phim = atan2( sinphi1 + sinphi2, √( (cosphi1 + cosphi2⋅cosdeltalambda)² + cos²phi2⋅sin²deltalambda ) )
+        // lambdam = lambda1 + atan2(cosphi2⋅sindeltalambda, cosphi1 + cosphi2⋅cosdeltalambda)
         // midpoint is sum of vectors to two points: mathforum.org/library/drmath/view/51822.html
 
-        const φ1 = this.lat.toRadians();
-        const λ1 = this.lon.toRadians();
-        const φ2 = point.lat.toRadians();
-        const Δλ = (point.lon - this.lon).toRadians();
+        const phi1 = this.lat.toRadians();
+        const lambda1 = this.lon.toRadians();
+        const phi2 = point.lat.toRadians();
+        const deltalambda = (point.lon - this.lon).toRadians();
 
         // get cartesian coordinates for the two points
-        const A = { x: Math.cos(φ1), y: 0, z: Math.sin(φ1) }; // place point A on prime meridian y=0
-        const B = { x: Math.cos(φ2)*Math.cos(Δλ), y: Math.cos(φ2)*Math.sin(Δλ), z: Math.sin(φ2) };
+        const A = { x: Math.cos(phi1), y: 0, z: Math.sin(phi1) }; // place point A on prime meridian y=0
+        const B = { x: Math.cos(phi2)*Math.cos(deltalambda), y: Math.cos(phi2)*Math.sin(deltalambda), z: Math.sin(phi2) };
 
         // vector to midpoint is sum of vectors to two points (no need to normalise)
         const C = { x: A.x + B.x, y: A.y + B.y, z: A.z + B.z };
 
-        const φm = Math.atan2(C.z, Math.sqrt(C.x*C.x + C.y*C.y));
-        const λm = λ1 + Math.atan2(C.y, C.x);
+        const phim = Math.atan2(C.z, Math.sqrt(C.x*C.x + C.y*C.y));
+        const lambdam = lambda1 + Math.atan2(C.y, C.x);
 
-        const lat = φm.toDegrees();
-        const lon = λm.toDegrees();
+        const lat = phim.toDegrees();
+        const lon = lambdam.toDegrees();
 
         return new LatLonSpherical(lat, lon);
     }
@@ -317,28 +317,28 @@ class LatLonSpherical {
         if (!(point instanceof LatLonSpherical)) point = LatLonSpherical.parse(point); // allow literal forms
         if (this.equals(point)) return new LatLonSpherical(this.lat, this.lon); // coincident points
 
-        const φ1 = this.lat.toRadians(), λ1 = this.lon.toRadians();
-        const φ2 = point.lat.toRadians(), λ2 = point.lon.toRadians();
+        const phi1 = this.lat.toRadians(), lambda1 = this.lon.toRadians();
+        const phi2 = point.lat.toRadians(), lambda2 = point.lon.toRadians();
 
         // distance between points
-        const Δφ = φ2 - φ1;
-        const Δλ = λ2 - λ1;
-        const a = Math.sin(Δφ/2) * Math.sin(Δφ/2)
-            + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
-        const δ = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        const deltaphi = phi2 - phi1;
+        const deltalambda = lambda2 - lambda1;
+        const a = Math.sin(deltaphi/2) * Math.sin(deltaphi/2)
+            + Math.cos(phi1) * Math.cos(phi2) * Math.sin(deltalambda/2) * Math.sin(deltalambda/2);
+        const delta = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 
-        const A = Math.sin((1-fraction)*δ) / Math.sin(δ);
-        const B = Math.sin(fraction*δ) / Math.sin(δ);
+        const A = Math.sin((1-fraction)*delta) / Math.sin(delta);
+        const B = Math.sin(fraction*delta) / Math.sin(delta);
 
-        const x = A * Math.cos(φ1) * Math.cos(λ1) + B * Math.cos(φ2) * Math.cos(λ2);
-        const y = A * Math.cos(φ1) * Math.sin(λ1) + B * Math.cos(φ2) * Math.sin(λ2);
-        const z = A * Math.sin(φ1) + B * Math.sin(φ2);
+        const x = A * Math.cos(phi1) * Math.cos(lambda1) + B * Math.cos(phi2) * Math.cos(lambda2);
+        const y = A * Math.cos(phi1) * Math.sin(lambda1) + B * Math.cos(phi2) * Math.sin(lambda2);
+        const z = A * Math.sin(phi1) + B * Math.sin(phi2);
 
-        const φ3 = Math.atan2(z, Math.sqrt(x*x + y*y));
-        const λ3 = Math.atan2(y, x);
+        const phi3 = Math.atan2(z, Math.sqrt(x*x + y*y));
+        const lambda3 = Math.atan2(y, x);
 
-        const lat = φ3.toDegrees();
-        const lon = λ3.toDegrees();
+        const lat = phi3.toDegrees();
+        const lon = lambda3.toDegrees();
 
         return new LatLonSpherical(lat, lon);
     }
@@ -358,23 +358,23 @@ class LatLonSpherical {
      *   const p2 = p1.destinationPoint(7794, 300.7); // 51.5136°N, 000.0983°W
      */
     destinationPoint(distance, bearing, radius=6371e3) {
-        // sinφ2 = sinφ1⋅cosδ + cosφ1⋅sinδ⋅cosθ
-        // tanΔλ = sinθ⋅sinδ⋅cosφ1 / cosδ−sinφ1⋅sinφ2
+        // sinphi2 = sinphi1⋅cosdelta + cosphi1⋅sindelta⋅costheta
+        // tandeltalambda = sintheta⋅sindelta⋅cosphi1 / cosdelta−sinphi1⋅sinphi2
         // see mathforum.org/library/drmath/view/52049.html for derivation
 
-        const δ = distance / radius; // angular distance in radians
-        const θ = Number(bearing).toRadians();
+        const delta = distance / radius; // angular distance in radians
+        const theta = Number(bearing).toRadians();
 
-        const φ1 = this.lat.toRadians(), λ1 = this.lon.toRadians();
+        const phi1 = this.lat.toRadians(), lambda1 = this.lon.toRadians();
 
-        const sinφ2 = Math.sin(φ1) * Math.cos(δ) + Math.cos(φ1) * Math.sin(δ) * Math.cos(θ);
-        const φ2 = Math.asin(sinφ2);
-        const y = Math.sin(θ) * Math.sin(δ) * Math.cos(φ1);
-        const x = Math.cos(δ) - Math.sin(φ1) * sinφ2;
-        const λ2 = λ1 + Math.atan2(y, x);
+        const sinphi2 = Math.sin(phi1) * Math.cos(delta) + Math.cos(phi1) * Math.sin(delta) * Math.cos(theta);
+        const phi2 = Math.asin(sinphi2);
+        const y = Math.sin(theta) * Math.sin(delta) * Math.cos(phi1);
+        const x = Math.cos(delta) - Math.sin(phi1) * sinphi2;
+        const lambda2 = lambda1 + Math.atan2(y, x);
 
-        const lat = φ2.toDegrees();
-        const lon = λ2.toDegrees();
+        const lat = phi2.toDegrees();
+        const lon = lambda2.toDegrees();
 
         return new LatLonSpherical(lat, lon);
     }
@@ -383,8 +383,8 @@ class LatLonSpherical {
     /**
      * Returns the point of intersection of two paths defined by point and bearing.
      *
-     * @param   {LatLon}      p1 - First point.
-     * @param   {number}      brng1 - Initial bearing from first point.
+     * @param   {LatLon}      p1 - prime point.
+     * @param   {number}      brng1 - Initial bearing from prime point.
      * @param   {LatLon}      p2 - Second point.
      * @param   {number}      brng2 - Initial bearing from second point.
      * @returns {LatLon|null} Destination point (null if no unique intersection defined).
@@ -402,42 +402,42 @@ class LatLonSpherical {
 
         // see www.edwilliams.org/avform.htm#Intersection
 
-        const φ1 = p1.lat.toRadians(), λ1 = p1.lon.toRadians();
-        const φ2 = p2.lat.toRadians(), λ2 = p2.lon.toRadians();
-        const θ13 = Number(brng1).toRadians(), θ23 = Number(brng2).toRadians();
-        const Δφ = φ2 - φ1, Δλ = λ2 - λ1;
+        const phi1 = p1.lat.toRadians(), lambda1 = p1.lon.toRadians();
+        const phi2 = p2.lat.toRadians(), lambda2 = p2.lon.toRadians();
+        const theta13 = Number(brng1).toRadians(), theta23 = Number(brng2).toRadians();
+        const deltaphi = phi2 - phi1, deltalambda = lambda2 - lambda1;
 
         // angular distance p1-p2
-        const δ12 = 2 * Math.asin(Math.sqrt(Math.sin(Δφ/2) * Math.sin(Δφ/2)
-            + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2)));
-        if (Math.abs(δ12) < Number.EPSILON) return new LatLonSpherical(p1.lat, p1.lon); // coincident points
+        const delta12 = 2 * Math.asin(Math.sqrt(Math.sin(deltaphi/2) * Math.sin(deltaphi/2)
+            + Math.cos(phi1) * Math.cos(phi2) * Math.sin(deltalambda/2) * Math.sin(deltalambda/2)));
+        if (Math.abs(delta12) < Number.EPSILON) return new LatLonSpherical(p1.lat, p1.lon); // coincident points
 
         // initial/final bearings between points
-        const cosθa = (Math.sin(φ2) - Math.sin(φ1)*Math.cos(δ12)) / (Math.sin(δ12)*Math.cos(φ1));
-        const cosθb = (Math.sin(φ1) - Math.sin(φ2)*Math.cos(δ12)) / (Math.sin(δ12)*Math.cos(φ2));
-        const θa = Math.acos(Math.min(Math.max(cosθa, -1), 1)); // protect against rounding errors
-        const θb = Math.acos(Math.min(Math.max(cosθb, -1), 1)); // protect against rounding errors
+        const costhetaa = (Math.sin(phi2) - Math.sin(phi1)*Math.cos(delta12)) / (Math.sin(delta12)*Math.cos(phi1));
+        const costhetab = (Math.sin(phi1) - Math.sin(phi2)*Math.cos(delta12)) / (Math.sin(delta12)*Math.cos(phi2));
+        const thetaa = Math.acos(Math.min(Math.max(costhetaa, -1), 1)); // protect against rounding errors
+        const thetab = Math.acos(Math.min(Math.max(costhetab, -1), 1)); // protect against rounding errors
 
-        const θ12 = Math.sin(λ2-λ1)>0 ? θa : 2*π-θa;
-        const θ21 = Math.sin(λ2-λ1)>0 ? 2*π-θb : θb;
+        const theta12 = Math.sin(lambda2-lambda1)>0 ? thetaa : 2*pi-thetaa;
+        const theta21 = Math.sin(lambda2-lambda1)>0 ? 2*pi-thetab : thetab;
 
-        const α1 = θ13 - θ12; // angle 2-1-3
-        const α2 = θ21 - θ23; // angle 1-2-3
+        const alpha1 = theta13 - theta12; // angle 2-1-3
+        const alpha2 = theta21 - theta23; // angle 1-2-3
 
-        if (Math.sin(α1) == 0 && Math.sin(α2) == 0) return null; // infinite intersections
-        if (Math.sin(α1) * Math.sin(α2) < 0) return null;        // ambiguous intersection (antipodal?)
+        if (Math.sin(alpha1) == 0 && Math.sin(alpha2) == 0) return null; // infinite intersections
+        if (Math.sin(alpha1) * Math.sin(alpha2) < 0) return null;        // ambiguous intersection (antipodal?)
 
-        const cosα3 = -Math.cos(α1)*Math.cos(α2) + Math.sin(α1)*Math.sin(α2)*Math.cos(δ12);
+        const cosalpha3 = -Math.cos(alpha1)*Math.cos(alpha2) + Math.sin(alpha1)*Math.sin(alpha2)*Math.cos(delta12);
 
-        const δ13 = Math.atan2(Math.sin(δ12)*Math.sin(α1)*Math.sin(α2), Math.cos(α2) + Math.cos(α1)*cosα3);
+        const delta13 = Math.atan2(Math.sin(delta12)*Math.sin(alpha1)*Math.sin(alpha2), Math.cos(alpha2) + Math.cos(alpha1)*cosalpha3);
 
-        const φ3 = Math.asin(Math.min(Math.max(Math.sin(φ1)*Math.cos(δ13) + Math.cos(φ1)*Math.sin(δ13)*Math.cos(θ13), -1), 1));
+        const phi3 = Math.asin(Math.min(Math.max(Math.sin(phi1)*Math.cos(delta13) + Math.cos(phi1)*Math.sin(delta13)*Math.cos(theta13), -1), 1));
 
-        const Δλ13 = Math.atan2(Math.sin(θ13)*Math.sin(δ13)*Math.cos(φ1), Math.cos(δ13) - Math.sin(φ1)*Math.sin(φ3));
-        const λ3 = λ1 + Δλ13;
+        const deltalambda13 = Math.atan2(Math.sin(theta13)*Math.sin(delta13)*Math.cos(phi1), Math.cos(delta13) - Math.sin(phi1)*Math.sin(phi3));
+        const lambda3 = lambda1 + deltalambda13;
 
-        const lat = φ3.toDegrees();
-        const lon = λ3.toDegrees();
+        const lat = phi3.toDegrees();
+        const lon = lambda3.toDegrees();
 
         return new LatLonSpherical(lat, lon);
     }
@@ -465,13 +465,13 @@ class LatLonSpherical {
 
         if (this.equals(pathStart)) return 0;
 
-        const δ13 = pathStart.distanceTo(this, R) / R;
-        const θ13 = pathStart.initialBearingTo(this).toRadians();
-        const θ12 = pathStart.initialBearingTo(pathEnd).toRadians();
+        const delta13 = pathStart.distanceTo(this, R) / R;
+        const theta13 = pathStart.initialBearingTo(this).toRadians();
+        const theta12 = pathStart.initialBearingTo(pathEnd).toRadians();
 
-        const δxt = Math.asin(Math.sin(δ13) * Math.sin(θ13 - θ12));
+        const deltaxt = Math.asin(Math.sin(delta13) * Math.sin(theta13 - theta12));
 
-        return δxt * R;
+        return deltaxt * R;
     }
 
 
@@ -499,15 +499,15 @@ class LatLonSpherical {
 
         if (this.equals(pathStart)) return 0;
 
-        const δ13 = pathStart.distanceTo(this, R) / R;
-        const θ13 = pathStart.initialBearingTo(this).toRadians();
-        const θ12 = pathStart.initialBearingTo(pathEnd).toRadians();
+        const delta13 = pathStart.distanceTo(this, R) / R;
+        const theta13 = pathStart.initialBearingTo(this).toRadians();
+        const theta12 = pathStart.initialBearingTo(pathEnd).toRadians();
 
-        const δxt = Math.asin(Math.sin(δ13) * Math.sin(θ13-θ12));
+        const deltaxt = Math.asin(Math.sin(delta13) * Math.sin(theta13-theta12));
 
-        const δat = Math.acos(Math.cos(δ13) / Math.abs(Math.cos(δxt)));
+        const deltaat = Math.acos(Math.cos(delta13) / Math.abs(Math.cos(deltaxt)));
 
-        return δat*Math.sign(Math.cos(θ12-θ13)) * R;
+        return deltaat*Math.sign(Math.cos(theta12-theta13)) * R;
     }
 
 
@@ -523,13 +523,13 @@ class LatLonSpherical {
      * @returns {number} Maximum latitude reached.
      */
     maxLatitude(bearing) {
-        const θ = Number(bearing).toRadians();
+        const theta = Number(bearing).toRadians();
 
-        const φ = this.lat.toRadians();
+        const phi = this.lat.toRadians();
 
-        const φMax = Math.acos(Math.abs(Math.sin(θ) * Math.cos(φ)));
+        const phiMax = Math.acos(Math.abs(Math.sin(theta) * Math.cos(phi)));
 
-        return φMax.toDegrees();
+        return phiMax.toDegrees();
     }
 
 
@@ -537,7 +537,7 @@ class LatLonSpherical {
      * Returns the pair of meridians at which a great circle defined by two points crosses the given
      * latitude. If the great circle doesn't reach the given latitude, null is returned.
      *
-     * @param   {LatLon}      point1 - First point defining great circle.
+     * @param   {LatLon}      point1 - prime point defining great circle.
      * @param   {LatLon}      point2 - Second point defining great circle.
      * @param   {number}      latitude - Latitude crossings are to be determined for.
      * @returns {Object|null} Object containing { lon1, lon2 } or null if given latitude not reached.
@@ -545,29 +545,29 @@ class LatLonSpherical {
     static crossingParallels(point1, point2, latitude) {
         if (point1.equals(point2)) return null; // coincident points
 
-        const φ = Number(latitude).toRadians();
+        const phi = Number(latitude).toRadians();
 
-        const φ1 = point1.lat.toRadians();
-        const λ1 = point1.lon.toRadians();
-        const φ2 = point2.lat.toRadians();
-        const λ2 = point2.lon.toRadians();
+        const phi1 = point1.lat.toRadians();
+        const lambda1 = point1.lon.toRadians();
+        const phi2 = point2.lat.toRadians();
+        const lambda2 = point2.lon.toRadians();
 
-        const Δλ = λ2 - λ1;
+        const deltalambda = lambda2 - lambda1;
 
-        const x = Math.sin(φ1) * Math.cos(φ2) * Math.cos(φ) * Math.sin(Δλ);
-        const y = Math.sin(φ1) * Math.cos(φ2) * Math.cos(φ) * Math.cos(Δλ) - Math.cos(φ1) * Math.sin(φ2) * Math.cos(φ);
-        const z = Math.cos(φ1) * Math.cos(φ2) * Math.sin(φ) * Math.sin(Δλ);
+        const x = Math.sin(phi1) * Math.cos(phi2) * Math.cos(phi) * Math.sin(deltalambda);
+        const y = Math.sin(phi1) * Math.cos(phi2) * Math.cos(phi) * Math.cos(deltalambda) - Math.cos(phi1) * Math.sin(phi2) * Math.cos(phi);
+        const z = Math.cos(phi1) * Math.cos(phi2) * Math.sin(phi) * Math.sin(deltalambda);
 
         if (z * z > x * x + y * y) return null; // great circle doesn't reach latitude
 
-        const λm = Math.atan2(-y, x);               // longitude at max latitude
-        const Δλi = Math.acos(z / Math.sqrt(x*x + y*y)); // Δλ from λm to intersection points
+        const lambdam = Math.atan2(-y, x);               // longitude at max latitude
+        const deltalambdai = Math.acos(z / Math.sqrt(x*x + y*y)); // deltalambda from lambdam to intersection points
 
-        const λi1 = λ1 + λm - Δλi;
-        const λi2 = λ1 + λm + Δλi;
+        const lambdai1 = lambda1 + lambdam - deltalambdai;
+        const lambdai2 = lambda1 + lambdam + deltalambdai;
 
-        const lon1 = λi1.toDegrees();
-        const lon2 = λi2.toDegrees();
+        const lon1 = lambdai1.toDegrees();
+        const lon2 = lambdai2.toDegrees();
 
         return {
             lon1: Dms.wrap180(lon1),
@@ -597,21 +597,21 @@ class LatLonSpherical {
         // see www.edwilliams.org/avform.htm#Rhumb
 
         const R = radius;
-        const φ1 = this.lat.toRadians();
-        const φ2 = point.lat.toRadians();
-        const Δφ = φ2 - φ1;
-        let Δλ = Math.abs(point.lon - this.lon).toRadians();
+        const phi1 = this.lat.toRadians();
+        const phi2 = point.lat.toRadians();
+        const deltaphi = phi2 - phi1;
+        let deltalambda = Math.abs(point.lon - this.lon).toRadians();
         // if dLon over 180° take shorter rhumb line across the anti-meridian:
-        if (Math.abs(Δλ) > π) Δλ = Δλ > 0 ? -(2 * π - Δλ) : (2 * π + Δλ);
+        if (Math.abs(deltalambda) > pi) deltalambda = deltalambda > 0 ? -(2 * pi - deltalambda) : (2 * pi + deltalambda);
 
         // on Mercator projection, longitude distances shrink by latitude; q is the 'stretch factor'
         // q becomes ill-conditioned along E-W line (0/0); use empirical tolerance to avoid it
-        const Δψ = Math.log(Math.tan(φ2 / 2 + π / 4) / Math.tan(φ1 / 2 + π / 4));
-        const q = Math.abs(Δψ) > 10e-12 ? Δφ / Δψ : Math.cos(φ1);
+        const deltapsi = Math.log(Math.tan(phi2 / 2 + pi / 4) / Math.tan(phi1 / 2 + pi / 4));
+        const q = Math.abs(deltapsi) > 10e-12 ? deltaphi / deltapsi : Math.cos(phi1);
 
-        // distance is pythagoras on 'stretched' Mercator projection, √(Δφ² + q²·Δλ²)
-        const δ = Math.sqrt(Δφ*Δφ + q*q * Δλ*Δλ); // angular distance in radians
-        const d = δ * R;
+        // distance is pythagoras on 'stretched' Mercator projection, √(deltaphi² + q²·deltalambda²)
+        const delta = Math.sqrt(deltaphi*deltaphi + q*q * deltalambda*deltalambda); // angular distance in radians
+        const d = delta * R;
 
         return d;
     }
@@ -632,17 +632,17 @@ class LatLonSpherical {
         if (!(point instanceof LatLonSpherical)) point = LatLonSpherical.parse(point); // allow literal forms
         if (this.equals(point)) return NaN; // coincident points
 
-        const φ1 = this.lat.toRadians();
-        const φ2 = point.lat.toRadians();
-        let Δλ = (point.lon - this.lon).toRadians();
+        const phi1 = this.lat.toRadians();
+        const phi2 = point.lat.toRadians();
+        let deltalambda = (point.lon - this.lon).toRadians();
         // if dLon over 180° take shorter rhumb line across the anti-meridian:
-        if (Math.abs(Δλ) > π) Δλ = Δλ > 0 ? -(2 * π - Δλ) : (2 * π + Δλ);
+        if (Math.abs(deltalambda) > pi) deltalambda = deltalambda > 0 ? -(2 * pi - deltalambda) : (2 * pi + deltalambda);
 
-        const Δψ = Math.log(Math.tan(φ2 / 2 + π / 4) / Math.tan(φ1 / 2 + π / 4));
+        const deltapsi = Math.log(Math.tan(phi2 / 2 + pi / 4) / Math.tan(phi1 / 2 + pi / 4));
 
-        const θ = Math.atan2(Δλ, Δψ);
+        const theta = Math.atan2(deltalambda, deltapsi);
 
-        const bearing = θ.toDegrees();
+        const bearing = theta.toDegrees();
 
         return Dms.wrap360(bearing);
     }
@@ -662,25 +662,25 @@ class LatLonSpherical {
      *   const p2 = p1.rhumbDestinationPoint(40300, 116.7); // 50.9642°N, 001.8530°E
      */
     rhumbDestinationPoint(distance, bearing, radius=6371e3) {
-        const φ1 = this.lat.toRadians(), λ1 = this.lon.toRadians();
-        const θ = Number(bearing).toRadians();
+        const phi1 = this.lat.toRadians(), lambda1 = this.lon.toRadians();
+        const theta = Number(bearing).toRadians();
 
-        const δ = distance / radius; // angular distance in radians
+        const delta = distance / radius; // angular distance in radians
 
-        const Δφ = δ * Math.cos(θ);
-        let φ2 = φ1 + Δφ;
+        const deltaphi = delta * Math.cos(theta);
+        let phi2 = phi1 + deltaphi;
 
         // check for some daft bugger going past the pole, normalise latitude if so
-        if (Math.abs(φ2) > π / 2) φ2 = φ2 > 0 ? π - φ2 : -π - φ2;
+        if (Math.abs(phi2) > pi / 2) phi2 = phi2 > 0 ? pi - phi2 : -pi - phi2;
 
-        const Δψ = Math.log(Math.tan(φ2 / 2 + π / 4) / Math.tan(φ1 / 2 + π / 4));
-        const q = Math.abs(Δψ) > 10e-12 ? Δφ / Δψ : Math.cos(φ1); // E-W course becomes ill-conditioned with 0/0
+        const deltapsi = Math.log(Math.tan(phi2 / 2 + pi / 4) / Math.tan(phi1 / 2 + pi / 4));
+        const q = Math.abs(deltapsi) > 10e-12 ? deltaphi / deltapsi : Math.cos(phi1); // E-W course becomes ill-conditioned with 0/0
 
-        const Δλ = δ * Math.sin(θ) / q;
-        const λ2 = λ1 + Δλ;
+        const deltalambda = delta * Math.sin(theta) / q;
+        const lambda2 = lambda1 + deltalambda;
 
-        const lat = φ2.toDegrees();
-        const lon = λ2.toDegrees();
+        const lat = phi2.toDegrees();
+        const lon = lambda2.toDegrees();
 
         return new LatLonSpherical(lat, lon);
     }
@@ -702,21 +702,21 @@ class LatLonSpherical {
 
         // see mathforum.org/kb/message.jspa?messageID=148837
 
-        const φ1 = this.lat.toRadians(); let λ1 = this.lon.toRadians();
-        const φ2 = point.lat.toRadians(), λ2 = point.lon.toRadians();
+        const phi1 = this.lat.toRadians(); let lambda1 = this.lon.toRadians();
+        const phi2 = point.lat.toRadians(), lambda2 = point.lon.toRadians();
 
-        if (Math.abs(λ2 - λ1) > π) λ1 += 2 * π; // crossing anti-meridian
+        if (Math.abs(lambda2 - lambda1) > pi) lambda1 += 2 * pi; // crossing anti-meridian
 
-        const φ3 = (φ1 + φ2) / 2;
-        const f1 = Math.tan(π / 4 + φ1 / 2);
-        const f2 = Math.tan(π / 4 + φ2 / 2);
-        const f3 = Math.tan(π / 4 + φ3 / 2);
-        let λ3 = ((λ2 - λ1) * Math.log(f3) + λ1 * Math.log(f2) - λ2 * Math.log(f1)) / Math.log(f2 / f1);
+        const phi3 = (phi1 + phi2) / 2;
+        const f1 = Math.tan(pi / 4 + phi1 / 2);
+        const f2 = Math.tan(pi / 4 + phi2 / 2);
+        const f3 = Math.tan(pi / 4 + phi3 / 2);
+        let lambda3 = ((lambda2 - lambda1) * Math.log(f3) + lambda1 * Math.log(f2) - lambda2 * Math.log(f1)) / Math.log(f2 / f1);
 
-        if (!isFinite(λ3)) λ3 = (λ1 + λ2) / 2; // parallel of latitude
+        if (!isFinite(lambda3)) lambda3 = (lambda1 + lambda2) / 2; // parallel of latitude
 
-        const lat = φ3.toDegrees();
-        const lon = λ3.toDegrees();
+        const lat = phi3.toDegrees();
+        const lon = lambda3.toDegrees();
 
         return new LatLonSpherical(lat, lon);
     }
@@ -739,13 +739,13 @@ class LatLonSpherical {
      */
     static areaOf(polygon, radius=6371e3) {
         // uses method due to Karney: osgeo-org.1560.x6.nabble.com/Area-of-a-spherical-polygon-td3841625.html;
-        // for each edge of the polygon, tan(E/2) = tan(Δλ/2)·(tan(φ₁/2)+tan(φ₂/2)) / (1+tan(φ₁/2)·tan(φ₂/2))
+        // for each edge of the polygon, tan(E/2) = tan(deltalambda/2)·(tan(phi₁/2)+tan(phi₂/2)) / (1+tan(phi₁/2)·tan(phi₂/2))
         // where E is the spherical excess of the trapezium obtained by extending the edge to the equator
         // (Karney's method is probably more efficient than the more widely known L’Huilier’s Theorem)
 
         const R = radius;
 
-        // close polygon so that last point equals first point
+        // close polygon so that last point equals prime point
         const closed = polygon[0].equals(polygon[polygon.length-1]);
         if (!closed) polygon.push(polygon[0]);
 
@@ -753,14 +753,14 @@ class LatLonSpherical {
 
         let S = 0; // spherical excess in steradians
         for (let v=0; v<nVertices; v++) {
-            const φ1 = polygon[v].lat.toRadians();
-            const φ2 = polygon[v+1].lat.toRadians();
-            const Δλ = (polygon[v+1].lon - polygon[v].lon).toRadians();
-            const E = 2 * Math.atan2(Math.tan(Δλ/2) * (Math.tan(φ1/2)+Math.tan(φ2/2)), 1 + Math.tan(φ1/2)*Math.tan(φ2/2));
+            const phi1 = polygon[v].lat.toRadians();
+            const phi2 = polygon[v+1].lat.toRadians();
+            const deltalambda = (polygon[v+1].lon - polygon[v].lon).toRadians();
+            const E = 2 * Math.atan2(Math.tan(deltalambda/2) * (Math.tan(phi1/2)+Math.tan(phi2/2)), 1 + Math.tan(phi1/2)*Math.tan(phi2/2));
             S += E;
         }
 
-        if (isPoleEnclosedBy(polygon)) S = Math.abs(S) - 2*π;
+        if (isPoleEnclosedBy(polygon)) S = Math.abs(S) - 2*pi;
 
         const A = Math.abs(S * R*R); // area in units of R
 
@@ -772,19 +772,19 @@ class LatLonSpherical {
         // normal ±360°: blog.element84.com/determining-if-a-spherical-polygon-contains-a-pole.html
         function isPoleEnclosedBy(p) {
             // TODO: any better test than this?
-            let ΣΔ = 0;
+            let sigmadelta = 0;
             let prevBrng = p[0].initialBearingTo(p[1]);
             for (let v=0; v<p.length-1; v++) {
                 const initBrng = p[v].initialBearingTo(p[v+1]);
                 const finalBrng = p[v].finalBearingTo(p[v+1]);
-                ΣΔ += (initBrng - prevBrng + 540) % 360 - 180;
-                ΣΔ += (finalBrng - initBrng + 540) % 360 - 180;
+                sigmadelta += (initBrng - prevBrng + 540) % 360 - 180;
+                sigmadelta += (finalBrng - initBrng + 540) % 360 - 180;
                 prevBrng = finalBrng;
             }
             const initBrng = p[0].initialBearingTo(p[1]);
-            ΣΔ += (initBrng - prevBrng + 540) % 360 - 180;
+            sigmadelta += (initBrng - prevBrng + 540) % 360 - 180;
             // TODO: fix (intermittant) edge crossing pole - eg (85,90), (85,0), (85,-90)
-            const enclosed = Math.abs(ΣΔ) < 90; // 0°-ish
+            const enclosed = Math.abs(sigmadelta) < 90; // 0°-ish
             return enclosed;
         }
     }

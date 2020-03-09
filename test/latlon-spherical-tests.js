@@ -14,8 +14,8 @@ if (typeof window == 'undefined') { // node
 describe('latlon-spherical', function() {
     const test = it; // just an alias
     const R = 6371e3;
-    const π = Math.PI;
-    const ε = Number.EPSILON;
+    const pi = Math.PI;
+    const epsilon = Number.EPSILON;
 
     Dms.separator = ''; // tests are easier without any DMS separator
 
@@ -184,7 +184,7 @@ describe('latlon-spherical', function() {
         test('int’n (fail 3)',                () => should.Throw(function() { LatLon.intersection(stn, 'n', cdg, 's'); }, TypeError, 'invalid brng1 ‘n’'));
         test('int’n (fail 4)',                () => should.Throw(function() { LatLon.intersection(stn, 0, cdg, 's'); }, TypeError, 'invalid brng2 ‘s’'));
         test('rounding errors',               () => LatLon.intersection(new LatLon(51, 0), 120, new LatLon(50, 0), 60).toString().should.equal('50.4921°N, 001.3612°E'));
-        test('rounding: φ3 requires clamp #71',() => LatLon.intersection(new LatLon(-77.6966041375563, 18.2812500000000), 179.99999999999995, new LatLon(89, 180), 180).toString().should.equal('90.0000°S, 163.9902°W'));
+        test('rounding: phi3 requires clamp #71',() => LatLon.intersection(new LatLon(-77.6966041375563, 18.2812500000000), 179.99999999999995, new LatLon(89, 180), 180).toString().should.equal('90.0000°S, 163.9902°W'));
     });
 
     describe('cross-track / along-track', function() {
@@ -230,10 +230,10 @@ describe('latlon-spherical', function() {
         const polyTriangle = [ new LatLon(1, 1), new LatLon(2, 1), new LatLon(1, 2) ];
         const polySquareCw = [ new LatLon(1, 1), new LatLon(2, 1), new LatLon(2, 2), new LatLon(1, 2) ];
         const polySquareCcw = [ new LatLon(1, 1), new LatLon(1, 2), new LatLon(2, 2), new LatLon(2, 1) ];
-        const polyOctant = [ new LatLon(0, ε), new LatLon(90, 0), new LatLon(0, 90-ε) ];
-        const polyOctantS = [ new LatLon(-ε, ε), new LatLon(90, 0), new LatLon(-ε, 90-ε) ];
-        const polyQuadrant = [ new LatLon(ε, ε), new LatLon(90, ε), new LatLon(ε, 180-ε), new LatLon(ε, 90) ];
-        const polyHemiE = [ new LatLon(ε, ε), new LatLon(90-ε, 0), new LatLon(90-ε, 180), new LatLon(ε, 180), new LatLon(-ε, 180), new LatLon(-90+ε, 180), new LatLon(-90+ε, 0), new LatLon(-ε, ε) ];
+        const polyOctant = [ new LatLon(0, epsilon), new LatLon(90, 0), new LatLon(0, 90-epsilon) ];
+        const polyOctantS = [ new LatLon(-epsilon, epsilon), new LatLon(90, 0), new LatLon(-epsilon, 90-epsilon) ];
+        const polyQuadrant = [ new LatLon(epsilon, epsilon), new LatLon(90, epsilon), new LatLon(epsilon, 180-epsilon), new LatLon(epsilon, 90) ];
+        const polyHemiE = [ new LatLon(epsilon, epsilon), new LatLon(90-epsilon, 0), new LatLon(90-epsilon, 180), new LatLon(epsilon, 180), new LatLon(-epsilon, 180), new LatLon(-90+epsilon, 180), new LatLon(-90+epsilon, 0), new LatLon(-epsilon, epsilon) ];
         const polyPole = [ new LatLon(89, 0), new LatLon(89, 120), new LatLon(89, -120) ];
         const polyConcave = [ new LatLon(1, 1), new LatLon(5, 1), new LatLon(5, 3), new LatLon(1, 3), new LatLon(3, 2) ];
 
@@ -242,10 +242,10 @@ describe('latlon-spherical', function() {
         test('triangle area closed', () => LatLon.areaOf(polyTriangle.concat(polyTriangle[0])).toFixed(0).should.equal('6181527888'));
         test('square cw area',       () => LatLon.areaOf(polySquareCw).toFixed(0).should.equal('12360230987'));
         test('square ccw area',      () => LatLon.areaOf(polySquareCcw).toFixed(0).should.equal('12360230987'));
-        test('octant area',          () => LatLon.areaOf(polyOctant).toFixed(1).should.equal((π*R*R/2).toFixed(1)));
-        test('super-octant area',    () => LatLon.areaOf(polyOctantS).toFixed(1).should.equal((π*R*R/2).toFixed(1)));
-        test('quadrant area',        () => LatLon.areaOf(polyQuadrant).should.equal(π*R*R));
-        test('hemisphere area',      () => LatLon.areaOf(polyHemiE).toFixed(1).should.equal((2*π*R*R).toFixed(1)));
+        test('octant area',          () => LatLon.areaOf(polyOctant).toFixed(1).should.equal((pi*R*R/2).toFixed(1)));
+        test('super-octant area',    () => LatLon.areaOf(polyOctantS).toFixed(1).should.equal((pi*R*R/2).toFixed(1)));
+        test('quadrant area',        () => LatLon.areaOf(polyQuadrant).should.equal(pi*R*R));
+        test('hemisphere area',      () => LatLon.areaOf(polyHemiE).toFixed(1).should.equal((2*pi*R*R).toFixed(1)));
         test('pole area',            () => LatLon.areaOf(polyPole).toFixed(0).should.equal('16063139192'));
         test('concave area',         () => LatLon.areaOf(polyConcave).toFixed(0).should.equal('74042699236'));
     });
@@ -253,7 +253,7 @@ describe('latlon-spherical', function() {
     describe('Ed Williams', function() { // www.edwilliams.org/avform.htm
         const lax = new LatLon(Dms.parse('33° 57′N'), Dms.parse('118° 24′W'));
         const jfk = new LatLon(Dms.parse('40° 38′N'), Dms.parse('073° 47′W'));
-        const r = 180*60/π; // earth radius in nautical miles
+        const r = 180*60/pi; // earth radius in nautical miles
         test('distance nm',   () => lax.distanceTo(jfk, r).toPrecision(4).should.equal('2144'));
         test('bearing',       () => lax.initialBearingTo(jfk).toPrecision(2).should.equal('66'));
         test('intermediate',  () => lax.intermediatePointTo(jfk, 100/2144).toString('dm', 0).should.equal('34°37′N, 116°33′W'));

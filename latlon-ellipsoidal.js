@@ -243,26 +243,26 @@ class LatLonEllipsoidal {
      *   earth centre.
      */
     toCartesian() {
-        // x = (ν+h)⋅cosφ⋅cosλ, y = (ν+h)⋅cosφ⋅sinλ, z = (ν⋅(1-e²)+h)⋅sinφ
-        // where ν = a/√(1−e²⋅sinφ⋅sinφ), e² = (a²-b²)/a² or (better conditioned) 2⋅f-f²
+        // x = (ny+h)⋅cosphi⋅coslambda, y = (ny+h)⋅cosphi⋅sinlambda, z = (ny⋅(1-e²)+h)⋅sinphi
+        // where ny = a/√(1−e²⋅sinphi⋅sinphi), e² = (a²-b²)/a² or (better conditioned) 2⋅f-f²
         const ellipsoid = this.datum
             ? this.datum.ellipsoid
             : this.referenceFrame ? this.referenceFrame.ellipsoid : ellipsoids.WGS84;
 
-        const φ = this.lat.toRadians();
-        const λ = this.lon.toRadians();
+        const phi = this.lat.toRadians();
+        const lambda = this.lon.toRadians();
         const h = this.height;
         const { a, f } = ellipsoid;
 
-        const sinφ = Math.sin(φ), cosφ = Math.cos(φ);
-        const sinλ = Math.sin(λ), cosλ = Math.cos(λ);
+        const sinphi = Math.sin(phi), cosphi = Math.cos(phi);
+        const sinlambda = Math.sin(lambda), coslambda = Math.cos(lambda);
 
         const eSq = 2*f - f*f;                      // 1st eccentricity squared ≡ (a²-b²)/a²
-        const ν = a / Math.sqrt(1 - eSq*sinφ*sinφ); // radius of curvature in prime vertical
+        const ny = a / Math.sqrt(1 - eSq*sinphi*sinphi); // radius of curvature in prime vertical
 
-        const x = (ν+h) * cosφ * cosλ;
-        const y = (ν+h) * cosφ * sinλ;
-        const z = (ν*(1-eSq)+h) * sinφ;
+        const x = (ny+h) * cosphi * coslambda;
+        const y = (ny+h) * cosphi * sinlambda;
+        const z = (ny*(1-eSq)+h) * sinphi;
 
         return new Cartesian(x, y, z);
     }
@@ -362,7 +362,7 @@ class Cartesian extends Vector3d {
      * Converts ‘this’ (geocentric) cartesian (x/y/z) coordinate to (geodetic) latitude/longitude
      * point on specified ellipsoid.
      *
-     * Uses Bowring’s (1985) formulation for μm precision in concise form; ‘The accuracy of geodetic
+     * Uses Bowring’s (1985) formulation for mym precision in concise form; ‘The accuracy of geodetic
      * latitude and height equations’, B R Bowring, Survey Review vol 28, 218, Oct 1985.
      *
      * @param   {LatLon.ellipsoids} [ellipsoid=WGS84] - Ellipsoid to use when converting point.
@@ -382,27 +382,27 @@ class Cartesian extends Vector3d {
         const { a, b, f } = ellipsoid;
 
         const e2 = 2*f - f*f;           // 1st eccentricity squared ≡ (a²−b²)/a²
-        const ε2 = e2 / (1-e2);         // 2nd eccentricity squared ≡ (a²−b²)/b²
+        const epsilon2 = e2 / (1-e2);         // 2nd eccentricity squared ≡ (a²−b²)/b²
         const p = Math.sqrt(x*x + y*y); // distance from minor axis
         const R = Math.sqrt(p*p + z*z); // polar radius
 
-        // parametric latitude (Bowring eqn.17, replacing tanβ = z·a / p·b)
-        const tanβ = (b*z)/(a*p) * (1+ε2*b/R);
-        const sinβ = tanβ / Math.sqrt(1+tanβ*tanβ);
-        const cosβ = sinβ / tanβ;
+        // parametric latitude (Bowring eqn.17, replacing tanbeta = z·a / p·b)
+        const tanbeta = (b*z)/(a*p) * (1+epsilon2*b/R);
+        const sinbeta = tanbeta / Math.sqrt(1+tanbeta*tanbeta);
+        const cosbeta = sinbeta / tanbeta;
 
-        // geodetic latitude (Bowring eqn.18: tanφ = z+ε²⋅b⋅sin³β / p−e²⋅cos³β)
-        const φ = isNaN(cosβ) ? 0 : Math.atan2(z + ε2*b*sinβ*sinβ*sinβ, p - e2*a*cosβ*cosβ*cosβ);
+        // geodetic latitude (Bowring eqn.18: tanphi = z+epsilon²⋅b⋅sin³beta / p−e²⋅cos³beta)
+        const phi = isNaN(cosbeta) ? 0 : Math.atan2(z + epsilon2*b*sinbeta*sinbeta*sinbeta, p - e2*a*cosbeta*cosbeta*cosbeta);
 
         // longitude
-        const λ = Math.atan2(y, x);
+        const lambda = Math.atan2(y, x);
 
         // height above ellipsoid (Bowring eqn.7)
-        const sinφ = Math.sin(φ), cosφ = Math.cos(φ);
-        const ν = a / Math.sqrt(1-e2*sinφ*sinφ); // length of the normal terminated by the minor axis
-        const h = p*cosφ + z*sinφ - (a*a/ν);
+        const sinphi = Math.sin(phi), cosphi = Math.cos(phi);
+        const ny = a / Math.sqrt(1-e2*sinphi*sinphi); // length of the normal terminated by the minor axis
+        const h = p*cosphi + z*sinphi - (a*a/ny);
 
-        const point = new LatLonEllipsoidal(φ.toDegrees(), λ.toDegrees(), h);
+        const point = new LatLonEllipsoidal(phi.toDegrees(), lambda.toDegrees(), h);
 
         return point;
     }

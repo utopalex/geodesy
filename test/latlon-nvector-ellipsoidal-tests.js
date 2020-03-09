@@ -126,13 +126,13 @@ describe('latlon-nvector-ellipsoidal', function() {
 
         const a = new LatLon(49.66618, 3.45063);
         const b = new LatLon(48.88667, 2.37472);
-        const δ = a.deltaTo(b);
-        test('example delta',          () => δ.toString().should.equal('[N:-86126,E:-78900,D:1069]'));
-        test('example dist',           () => δ.length.toFixed(3).should.equal('116807.681'));
-        test('example brng',           () => δ.bearing.toFixed(3).should.equal('222.493'));
-        test('example elev',           () => δ.elevation.toFixed(4).should.equal('-0.5245'));
+        const delta = a.deltaTo(b);
+        test('example delta',          () => delta.toString().should.equal('[N:-86126,E:-78900,D:1069]'));
+        test('example dist',           () => delta.length.toFixed(3).should.equal('116807.681'));
+        test('example brng',           () => delta.bearing.toFixed(3).should.equal('222.493'));
+        test('example elev',           () => delta.elevation.toFixed(4).should.equal('-0.5245'));
 
-        test('from delta',             () => Ned.fromDistanceBearingElevation(δ.length, δ.bearing, δ.elevation).toString().should.equal('[N:-86126,E:-78900,D:1069]'));
+        test('from delta',             () => Ned.fromDistanceBearingElevation(delta.length, delta.bearing, delta.elevation).toString().should.equal('[N:-86126,E:-78900,D:1069]'));
 
         test('fail',                   () => should.Throw(function() { new LatLon(0, 0).deltaTo(null); }, TypeError, 'invalid point ‘null’'));
     });

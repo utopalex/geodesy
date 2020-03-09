@@ -40,7 +40,7 @@ class Dms {
      *   import LatLon, { Dms } from '/js/geodesy/latlon-spherical.js';
      *   const p = new LatLon(51.2, 0.33).toString('dms');  // 51° 12′ 00″ N, 000° 19′ 48″ E
      *   Dms.separator = '';                                // no separator
-     *   const pʹ = new LatLon(51.2, 0.33).toString('dms'); // 51°12′00″N, 000°19′48″E
+     *   const pprime = new LatLon(51.2, 0.33).toString('dms'); // 51°12′00″N, 000°19′48″E
      */
     static get separator()     { return dmsSeparator; }
     static set separator(char) { dmsSeparator = char; }

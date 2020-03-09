@@ -6,7 +6,7 @@
 
 - Coerce textual lat/long to numeric in latlon-spherical
 - Return crossTrackDistance / alongTrackDistance of 0 when 'this' point equals start point
-- Round UTM to nm rather than (erroneous) μm
+- Round UTM to nm rather than (erroneous) mym
 - Fix (rare) rounding error issue in intersection() (#71]
 
 ## [2.2.0] - 2019-07-08

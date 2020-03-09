@@ -59,7 +59,7 @@ class LatLon_NvectorEllipsoidal extends LatLonEllipsoidal {
         // get delta in cartesian frame
         const c1 = this.toCartesian();
         const c2 = point.toCartesian();
-        const δc = c2.minus(c1);
+        const deltac = c2.minus(c1);
 
         // get local (n-vector) coordinate frame
         const n1 = this.toNvector();
@@ -75,14 +75,14 @@ class LatLon_NvectorEllipsoidal extends LatLonEllipsoidal {
             [ d.x, d.y, d.z ],
         ];
 
-        // apply rotation to δc to get delta in n-vector reference frame
-        const δn = new Cartesian(
-            r[0][0]*δc.x + r[0][1]*δc.y + r[0][2]*δc.z,
-            r[1][0]*δc.x + r[1][1]*δc.y + r[1][2]*δc.z,
-            r[2][0]*δc.x + r[2][1]*δc.y + r[2][2]*δc.z
+        // apply rotation to deltac to get delta in n-vector reference frame
+        const deltan = new Cartesian(
+            r[0][0]*deltac.x + r[0][1]*deltac.y + r[0][2]*deltac.z,
+            r[1][0]*deltac.x + r[1][1]*deltac.y + r[1][2]*deltac.z,
+            r[2][0]*deltac.x + r[2][1]*deltac.y + r[2][2]*deltac.z
         );
 
-        return new Ned(δn.x, δn.y, δn.z);
+        return new Ned(deltan.x, deltan.y, deltan.z);
     }
 
 
@@ -104,7 +104,7 @@ class LatLon_NvectorEllipsoidal extends LatLonEllipsoidal {
         if (!(delta instanceof Ned)) throw new TypeError('delta is not Ned object');
 
         // convert North-East-Down delta to standard x/y/z vector in coordinate frame of n-vector
-        const δn = new Vector3d(delta.north, delta.east, delta.down);
+        const deltan = new Vector3d(delta.north, delta.east, delta.down);
 
         // get local (n-vector) coordinate frame
         const n1 = this.toNvector();
@@ -120,16 +120,16 @@ class LatLon_NvectorEllipsoidal extends LatLonEllipsoidal {
             [ n.z, e.z, d.z ],
         ];
 
-        // apply rotation to δn to get delta in cartesian (ECEF) coordinate reference frame
-        const δc = new Cartesian(
-            r[0][0]*δn.x + r[0][1]*δn.y + r[0][2]*δn.z,
-            r[1][0]*δn.x + r[1][1]*δn.y + r[1][2]*δn.z,
-            r[2][0]*δn.x + r[2][1]*δn.y + r[2][2]*δn.z
+        // apply rotation to deltan to get delta in cartesian (ECEF) coordinate reference frame
+        const deltac = new Cartesian(
+            r[0][0]*deltan.x + r[0][1]*deltan.y + r[0][2]*deltan.z,
+            r[1][0]*deltan.x + r[1][1]*deltan.y + r[1][2]*deltan.z,
+            r[2][0]*deltan.x + r[2][1]*deltan.y + r[2][2]*deltan.z
         );
 
         // apply (cartesian) delta to c1 to obtain destination point as cartesian coordinate
         const c1 = this.toCartesian();              // convert this LatLon to Cartesian
-        const v2 = c1.plus(δc);                     // the plus() gives us a plain vector,..
+        const v2 = c1.plus(deltac);                     // the plus() gives us a plain vector,..
         const c2 = new Cartesian(v2.x, v2.y, v2.z); // ... need to convert it to Cartesian to get LatLon
 
         // return destination cartesian coordinate as latitude/longitude
@@ -147,16 +147,16 @@ class LatLon_NvectorEllipsoidal extends LatLonEllipsoidal {
      *   const n = p.toNvector(); // [0.5000,0.5000,0.7071]
      */
     toNvector() { // note: replicated in LatLonNvectorSpherical
-        const φ = this.lat.toRadians();
-        const λ = this.lon.toRadians();
+        const phi = this.lat.toRadians();
+        const lambda = this.lon.toRadians();
 
-        const sinφ = Math.sin(φ), cosφ = Math.cos(φ);
-        const sinλ = Math.sin(λ), cosλ = Math.cos(λ);
+        const sinphi = Math.sin(phi), cosphi = Math.cos(phi);
+        const sinlambda = Math.sin(lambda), coslambda = Math.cos(lambda);
 
         // right-handed vector: x -> 0°E,0°N; y -> 90°E,0°N, z -> 90°N
-        const x = cosφ * cosλ;
-        const y = cosφ * sinλ;
-        const z = sinφ;
+        const x = cosphi * coslambda;
+        const y = cosphi * sinlambda;
+        const z = sinphi;
 
         return new NvectorEllipsoidal(x, y, z, this.h, this.datum);
     }
@@ -224,14 +224,14 @@ class NvectorEllipsoidal extends Vector3d {
      *   const p = new Nvector(0.500000, 0.500000, 0.707107).toLatLon(); // 45.0000°N, 045.0000°E
      */
     toLatLon() {
-        // tanφ = z / √(x²+y²), tanλ = y / x (same as spherical calculation)
+        // tanphi = z / √(x²+y²), tanlambda = y / x (same as spherical calculation)
 
         const { x, y, z } = this;
 
-        const φ = Math.atan2(z, Math.sqrt(x*x + y*y));
-        const λ = Math.atan2(y, x);
+        const phi = Math.atan2(z, Math.sqrt(x*x + y*y));
+        const lambda = Math.atan2(y, x);
 
-        return new LatLon_NvectorEllipsoidal(φ.toDegrees(), λ.toDegrees(), this.h, this.datum);
+        return new LatLon_NvectorEllipsoidal(phi.toDegrees(), lambda.toDegrees(), this.h, this.datum);
     }
 
 
@@ -253,11 +253,11 @@ class NvectorEllipsoidal extends Vector3d {
         const m = (1-f) * (1-f); // (1−f)² = b²/a²
         const n = b / Math.sqrt(x*x/m + y*y/m + z*z);
 
-        const xʹ = n * x / m + x*h;
-        const yʹ = n * y / m + y*h;
-        const zʹ = n * z     + z*h;
+        const xprime = n * x / m + x*h;
+        const yprime = n * y / m + y*h;
+        const zprime = n * z     + z*h;
 
-        return new Cartesian_Nvector(xʹ, yʹ, zʹ);
+        return new Cartesian_Nvector(xprime, yprime, zprime);
     }
 
 
@@ -325,12 +325,12 @@ class Cartesian_Nvector extends Cartesian {
         const d = k * Math.sqrt(x*x + y*y) / (k + e2);
 
         const tmp = 1 / Math.sqrt(d*d + z*z);
-        const xʹ = tmp * k/(k+e2) * x;
-        const yʹ = tmp * k/(k+e2) * y;
-        const zʹ = tmp * z;
+        const xprime = tmp * k/(k+e2) * x;
+        const yprime = tmp * k/(k+e2) * y;
+        const zprime = tmp * z;
         const h = (k + e2 - 1)/k * Math.sqrt(d*d + z*z);
 
-        const n = new NvectorEllipsoidal(xʹ, yʹ, zʹ, h, datum);
+        const n = new NvectorEllipsoidal(xprime, yprime, zprime, h, datum);
 
         return n;
     }
@@ -383,9 +383,9 @@ class Ned {
      * @returns {number} Bearing of NED vector in degrees from north.
      */
     get bearing() {
-        const θ = Math.atan2(this.east, this.north);
+        const theta = Math.atan2(this.east, this.north);
 
-        return Dms.wrap360(θ.toDegrees()); // normalise to range 0..360°
+        return Dms.wrap360(theta.toDegrees()); // normalise to range 0..360°
     }
 
 
@@ -395,9 +395,9 @@ class Ned {
      * @returns {number} Elevation of NED vector in degrees from horizontal (ie tangent to ellipsoid surface).
      */
     get elevation() {
-        const α = Math.asin(this.down/this.length);
+        const alpha = Math.asin(this.down/this.length);
 
-        return -α.toDegrees();
+        return -alpha.toDegrees();
     }
 
 
@@ -413,16 +413,16 @@ class Ned {
      *   const delta = Ned.fromDistanceBearingElevation(116809.178, 222.493, -0.5416); // [N:-86127,E:-78901,D:1104]
      */
     static fromDistanceBearingElevation(dist, brng, elev) {
-        const θ = Number(brng).toRadians();
-        const α = Number(elev).toRadians();
+        const theta = Number(brng).toRadians();
+        const alpha = Number(elev).toRadians();
         dist = Number(dist);
 
-        const sinθ = Math.sin(θ), cosθ = Math.cos(θ);
-        const sinα = Math.sin(α), cosα = Math.cos(α);
+        const sintheta = Math.sin(theta), costheta = Math.cos(theta);
+        const sinalpha = Math.sin(alpha), cosalpha = Math.cos(alpha);
 
-        const n = cosθ * dist*cosα;
-        const e = sinθ * dist*cosα;
-        const d = -sinα * dist;
+        const n = costheta * dist*cosalpha;
+        const e = sintheta * dist*cosalpha;
+        const d = -sinalpha * dist;
 
         return new Ned(n, e, d);
     }

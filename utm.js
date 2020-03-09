@@ -106,12 +106,12 @@ class Utm {
         const n = f / (2 - f);        // 3rd flattening
         const n2 = n*n, n3 = n*n2, n4 = n*n3, n5 = n*n4, n6 = n*n5;
 
-        const A = a/(1+n) * (1 + 1/4*n2 + 1/64*n4 + 1/256*n6); // 2πA is the circumference of a meridian
+        const A = a/(1+n) * (1 + 1/4*n2 + 1/64*n4 + 1/256*n6); // 2piA is the circumference of a meridian
 
-        const η = x / (k0*A);
-        const ξ = y / (k0*A);
+        const eta = x / (k0*A);
+        const xi = y / (k0*A);
 
-        const β = [ null, // note β is one-based array (6th order Krüger expressions)
+        const beta = [ null, // note beta is one-based array (6th order Krüger expressions)
             1/2*n - 2/3*n2 + 37/96*n3 -    1/360*n4 -   81/512*n5 +    96199/604800*n6,
                    1/48*n2 +  1/15*n3 - 437/1440*n4 +   46/105*n5 - 1118711/3870720*n6,
                             17/480*n3 -   37/840*n4 - 209/4480*n5 +      5569/90720*n6,
@@ -119,62 +119,62 @@ class Utm {
                                                    4583/161280*n5 -  108847/3991680*n6,
                                                                  20648693/638668800*n6 ];
 
-        let ξʹ = ξ;
-        for (let j=1; j<=6; j++) ξʹ -= β[j] * Math.sin(2*j*ξ) * Math.cosh(2*j*η);
+        let xiprime = xi;
+        for (let j=1; j<=6; j++) xiprime -= beta[j] * Math.sin(2*j*xi) * Math.cosh(2*j*eta);
 
-        let ηʹ = η;
-        for (let j=1; j<=6; j++) ηʹ -= β[j] * Math.cos(2*j*ξ) * Math.sinh(2*j*η);
+        let etaprime = eta;
+        for (let j=1; j<=6; j++) etaprime -= beta[j] * Math.cos(2*j*xi) * Math.sinh(2*j*eta);
 
-        const sinhηʹ = Math.sinh(ηʹ);
-        const sinξʹ = Math.sin(ξʹ), cosξʹ = Math.cos(ξʹ);
+        const sinhetaprime = Math.sinh(etaprime);
+        const sinxiprime = Math.sin(xiprime), cosxiprime = Math.cos(xiprime);
 
-        const τʹ = sinξʹ / Math.sqrt(sinhηʹ*sinhηʹ + cosξʹ*cosξʹ);
+        const tauprime = sinxiprime / Math.sqrt(sinhetaprime*sinhetaprime + cosxiprime*cosxiprime);
 
-        let δτi = null;
-        let τi = τʹ;
+        let deltataui = null;
+        let taui = tauprime;
         do {
-            const σi = Math.sinh(e*Math.atanh(e*τi/Math.sqrt(1+τi*τi)));
-            const τiʹ = τi * Math.sqrt(1+σi*σi) - σi * Math.sqrt(1+τi*τi);
-            δτi = (τʹ - τiʹ)/Math.sqrt(1+τiʹ*τiʹ)
-                * (1 + (1-e*e)*τi*τi) / ((1-e*e)*Math.sqrt(1+τi*τi));
-            τi += δτi;
-        } while (Math.abs(δτi) > 1e-12); // using IEEE 754 δτi -> 0 after 2-3 iterations
-        // note relatively large convergence test as δτi toggles on ±1.12e-16 for eg 31 N 400000 5000000
-        const τ = τi;
+            const sigmai = Math.sinh(e*Math.atanh(e*taui/Math.sqrt(1+taui*taui)));
+            const tauiprime = taui * Math.sqrt(1+sigmai*sigmai) - sigmai * Math.sqrt(1+taui*taui);
+            deltataui = (tauprime - tauiprime)/Math.sqrt(1+tauiprime*tauiprime)
+                * (1 + (1-e*e)*taui*taui) / ((1-e*e)*Math.sqrt(1+taui*taui));
+            taui += deltataui;
+        } while (Math.abs(deltataui) > 1e-12); // using IEEE 754 deltataui -> 0 after 2-3 iterations
+        // note relatively large convergence test as deltataui toggles on ±1.12e-16 for eg 31 N 400000 5000000
+        const tau = taui;
 
-        const φ = Math.atan(τ);
+        const phi = Math.atan(tau);
 
-        let λ = Math.atan2(sinhηʹ, cosξʹ);
+        let lambda = Math.atan2(sinhetaprime, cosxiprime);
 
         // ---- convergence: Karney 2011 Eq 26, 27
 
         let p = 1;
-        for (let j=1; j<=6; j++) p -= 2*j*β[j] * Math.cos(2*j*ξ) * Math.cosh(2*j*η);
+        for (let j=1; j<=6; j++) p -= 2*j*beta[j] * Math.cos(2*j*xi) * Math.cosh(2*j*eta);
         let q = 0;
-        for (let j=1; j<=6; j++) q += 2*j*β[j] * Math.sin(2*j*ξ) * Math.sinh(2*j*η);
+        for (let j=1; j<=6; j++) q += 2*j*beta[j] * Math.sin(2*j*xi) * Math.sinh(2*j*eta);
 
-        const γʹ = Math.atan(Math.tan(ξʹ) * Math.tanh(ηʹ));
-        const γʺ = Math.atan2(q, p);
+        const gammaprime = Math.atan(Math.tan(xiprime) * Math.tanh(etaprime));
+        const gammadoubleprime = Math.atan2(q, p);
 
-        const γ = γʹ + γʺ;
+        const gamma = gammaprime + gammadoubleprime;
 
         // ---- scale: Karney 2011 Eq 28
 
-        const sinφ = Math.sin(φ);
-        const kʹ = Math.sqrt(1 - e*e*sinφ*sinφ) * Math.sqrt(1 + τ*τ) * Math.sqrt(sinhηʹ*sinhηʹ + cosξʹ*cosξʹ);
-        const kʺ = A / a / Math.sqrt(p*p + q*q);
+        const sinphi = Math.sin(phi);
+        const kprime = Math.sqrt(1 - e*e*sinphi*sinphi) * Math.sqrt(1 + tau*tau) * Math.sqrt(sinhetaprime*sinhetaprime + cosxiprime*cosxiprime);
+        const kdoubleprime = A / a / Math.sqrt(p*p + q*q);
 
-        const k = k0 * kʹ * kʺ;
+        const k = k0 * kprime * kdoubleprime;
 
         // ------------
 
-        const λ0 = ((z-1)*6 - 180 + 3).toRadians(); // longitude of central meridian
-        λ += λ0; // move λ from zonal to global coordinates
+        const lambda0 = ((z-1)*6 - 180 + 3).toRadians(); // longitude of central meridian
+        lambda += lambda0; // move lambda from zonal to global coordinates
 
         // round to reasonable precision
-        const lat = Number(φ.toDegrees().toFixed(14)); // nm precision (1nm = 10^-14°)
-        const lon = Number(λ.toDegrees().toFixed(14)); // (strictly lat rounding should be φ⋅cosφ!)
-        const convergence = Number(γ.toDegrees().toFixed(9));
+        const lat = Number(phi.toDegrees().toFixed(14)); // nm precision (1nm = 10^-14°)
+        const lon = Number(lambda.toDegrees().toFixed(14)); // (strictly lat rounding should be phi⋅cosphi!)
+        const convergence = Number(gamma.toDegrees().toFixed(9));
         const scale = Number(k.toFixed(12));
 
         const latLong = new LatLon_Utm(lat, lon, 0, this.datum);
@@ -275,24 +275,24 @@ class LatLon_Utm extends LatLonEllipsoidal {
         const falseEasting = 500e3, falseNorthing = 10000e3;
 
         let zone = zoneOverride || Math.floor((this.lon+180)/6) + 1; // longitudinal zone
-        let λ0 = ((zone-1)*6 - 180 + 3).toRadians(); // longitude of central meridian
+        let lambda0 = ((zone-1)*6 - 180 + 3).toRadians(); // longitude of central meridian
 
         // ---- handle Norway/Svalbard exceptions
         // grid zones are 8° tall; 0°N is offset 10 into latitude bands array
         const mgrsLatBands = 'CDEFGHJKLMNPQRSTUVWXX'; // X is repeated for 80-84°N
         const latBand = mgrsLatBands.charAt(Math.floor(this.lat/8+10));
         // adjust zone & central meridian for Norway
-        if (zone==31 && latBand=='V' && this.lon>= 3) { zone++; λ0 += (6).toRadians(); }
+        if (zone==31 && latBand=='V' && this.lon>= 3) { zone++; lambda0 += (6).toRadians(); }
         // adjust zone & central meridian for Svalbard
-        if (zone==32 && latBand=='X' && this.lon<  9) { zone--; λ0 -= (6).toRadians(); }
-        if (zone==32 && latBand=='X' && this.lon>= 9) { zone++; λ0 += (6).toRadians(); }
-        if (zone==34 && latBand=='X' && this.lon< 21) { zone--; λ0 -= (6).toRadians(); }
-        if (zone==34 && latBand=='X' && this.lon>=21) { zone++; λ0 += (6).toRadians(); }
-        if (zone==36 && latBand=='X' && this.lon< 33) { zone--; λ0 -= (6).toRadians(); }
-        if (zone==36 && latBand=='X' && this.lon>=33) { zone++; λ0 += (6).toRadians(); }
+        if (zone==32 && latBand=='X' && this.lon<  9) { zone--; lambda0 -= (6).toRadians(); }
+        if (zone==32 && latBand=='X' && this.lon>= 9) { zone++; lambda0 += (6).toRadians(); }
+        if (zone==34 && latBand=='X' && this.lon< 21) { zone--; lambda0 -= (6).toRadians(); }
+        if (zone==34 && latBand=='X' && this.lon>=21) { zone++; lambda0 += (6).toRadians(); }
+        if (zone==36 && latBand=='X' && this.lon< 33) { zone--; lambda0 -= (6).toRadians(); }
+        if (zone==36 && latBand=='X' && this.lon>=33) { zone++; lambda0 += (6).toRadians(); }
 
-        const φ = this.lat.toRadians();      // latitude ± from equator
-        const λ = this.lon.toRadians() - λ0; // longitude ± from central meridian
+        const phi = this.lat.toRadians();      // latitude ± from equator
+        const lambda = this.lon.toRadians() - lambda0; // longitude ± from central meridian
 
         // allow alternative ellipsoid to be specified
         const ellipsoid = this.datum ? this.datum.ellipsoid : LatLonEllipsoidal.ellipsoids.WGS84;
@@ -306,19 +306,19 @@ class LatLon_Utm extends LatLonEllipsoidal {
         const n = f / (2 - f);        // 3rd flattening
         const n2 = n*n, n3 = n*n2, n4 = n*n3, n5 = n*n4, n6 = n*n5;
 
-        const cosλ = Math.cos(λ), sinλ = Math.sin(λ), tanλ = Math.tan(λ);
+        const coslambda = Math.cos(lambda), sinlambda = Math.sin(lambda), tanlambda = Math.tan(lambda);
 
-        const τ = Math.tan(φ); // τ ≡ tanφ, τʹ ≡ tanφʹ; prime (ʹ) indicates angles on the conformal sphere
-        const σ = Math.sinh(e*Math.atanh(e*τ/Math.sqrt(1+τ*τ)));
+        const tau = Math.tan(phi); // tau ≡ tanphi, tauprime ≡ tanphiprime; prime (prime) indicates angles on the conformal sphere
+        const sigma = Math.sinh(e*Math.atanh(e*tau/Math.sqrt(1+tau*tau)));
 
-        const τʹ = τ*Math.sqrt(1+σ*σ) - σ*Math.sqrt(1+τ*τ);
+        const tauprime = tau*Math.sqrt(1+sigma*sigma) - sigma*Math.sqrt(1+tau*tau);
 
-        const ξʹ = Math.atan2(τʹ, cosλ);
-        const ηʹ = Math.asinh(sinλ / Math.sqrt(τʹ*τʹ + cosλ*cosλ));
+        const xiprime = Math.atan2(tauprime, coslambda);
+        const etaprime = Math.asinh(sinlambda / Math.sqrt(tauprime*tauprime + coslambda*coslambda));
 
-        const A = a/(1+n) * (1 + 1/4*n2 + 1/64*n4 + 1/256*n6); // 2πA is the circumference of a meridian
+        const A = a/(1+n) * (1 + 1/4*n2 + 1/64*n4 + 1/256*n6); // 2piA is the circumference of a meridian
 
-        const α = [ null, // note α is one-based array (6th order Krüger expressions)
+        const alpha = [ null, // note alpha is one-based array (6th order Krüger expressions)
             1/2*n - 2/3*n2 + 5/16*n3 +   41/180*n4 -     127/288*n5 +      7891/37800*n6,
                   13/48*n2 -  3/5*n3 + 557/1440*n4 +     281/630*n5 - 1983433/1935360*n6,
                            61/240*n3 -  103/140*n4 + 15061/26880*n5 +   167603/181440*n6,
@@ -326,34 +326,34 @@ class LatLon_Utm extends LatLonEllipsoidal {
                                                      34729/80640*n5 - 3418889/1995840*n6,
                                                                   212378941/319334400*n6 ];
 
-        let ξ = ξʹ;
-        for (let j=1; j<=6; j++) ξ += α[j] * Math.sin(2*j*ξʹ) * Math.cosh(2*j*ηʹ);
+        let xi = xiprime;
+        for (let j=1; j<=6; j++) xi += alpha[j] * Math.sin(2*j*xiprime) * Math.cosh(2*j*etaprime);
 
-        let η = ηʹ;
-        for (let j=1; j<=6; j++) η += α[j] * Math.cos(2*j*ξʹ) * Math.sinh(2*j*ηʹ);
+        let eta = etaprime;
+        for (let j=1; j<=6; j++) eta += alpha[j] * Math.cos(2*j*xiprime) * Math.sinh(2*j*etaprime);
 
-        let x = k0 * A * η;
-        let y = k0 * A * ξ;
+        let x = k0 * A * eta;
+        let y = k0 * A * xi;
 
         // ---- convergence: Karney 2011 Eq 23, 24
 
-        let pʹ = 1;
-        for (let j=1; j<=6; j++) pʹ += 2*j*α[j] * Math.cos(2*j*ξʹ) * Math.cosh(2*j*ηʹ);
-        let qʹ = 0;
-        for (let j=1; j<=6; j++) qʹ += 2*j*α[j] * Math.sin(2*j*ξʹ) * Math.sinh(2*j*ηʹ);
+        let pprime = 1;
+        for (let j=1; j<=6; j++) pprime += 2*j*alpha[j] * Math.cos(2*j*xiprime) * Math.cosh(2*j*etaprime);
+        let qprime = 0;
+        for (let j=1; j<=6; j++) qprime += 2*j*alpha[j] * Math.sin(2*j*xiprime) * Math.sinh(2*j*etaprime);
 
-        const γʹ = Math.atan(τʹ / Math.sqrt(1+τʹ*τʹ)*tanλ);
-        const γʺ = Math.atan2(qʹ, pʹ);
+        const gammaprime = Math.atan(tauprime / Math.sqrt(1+tauprime*tauprime)*tanlambda);
+        const gammadoubleprime = Math.atan2(qprime, pprime);
 
-        const γ = γʹ + γʺ;
+        const gamma = gammaprime + gammadoubleprime;
 
         // ---- scale: Karney 2011 Eq 25
 
-        const sinφ = Math.sin(φ);
-        const kʹ = Math.sqrt(1 - e*e*sinφ*sinφ) * Math.sqrt(1 + τ*τ) / Math.sqrt(τʹ*τʹ + cosλ*cosλ);
-        const kʺ = A / a * Math.sqrt(pʹ*pʹ + qʹ*qʹ);
+        const sinphi = Math.sin(phi);
+        const kprime = Math.sqrt(1 - e*e*sinphi*sinphi) * Math.sqrt(1 + tau*tau) / Math.sqrt(tauprime*tauprime + coslambda*coslambda);
+        const kdoubleprime = A / a * Math.sqrt(pprime*pprime + qprime*qprime);
 
-        const k = k0 * kʹ * kʺ;
+        const k = k0 * kprime * kdoubleprime;
 
         // ------------
 
@@ -364,7 +364,7 @@ class LatLon_Utm extends LatLonEllipsoidal {
         // round to reasonable precision
         x = Number(x.toFixed(9)); // nm precision
         y = Number(y.toFixed(9)); // nm precision
-        const convergence = Number(γ.toDegrees().toFixed(9));
+        const convergence = Number(gamma.toDegrees().toFixed(9));
         const scale = Number(k.toFixed(12));
 
         const h = this.lat>=0 ? 'N' : 'S'; // hemisphere

@@ -92,9 +92,9 @@ describe('latlon-ellipsoidal-referenceframe', function() {
         const gda94 = itrf2005.convertReferenceFrame(LatLon.referenceFrames.GDA94, 2010.4559);
         test('Appendix A cartesian', () => gda94.toCartesian().toString(4).should.equal('[-4052051.7614,4212836.1945,-2545106.0146](GDA94@2010.4559)'));
         test('Appendix A geodetic',  () => gda94.toString('dms', 5, 4, true).should.equal('23°40′12.44582″S, 133°53′07.84795″E +603.3361m (GDA94@2010.4559)'));
-        // note variations in final decimal for gda94ˣ, gda94ᶻ, gda94ᵠ – difference in rounding and/or Cartesian.toLatLon()?
-        const itrf2005ʹ = gda94.convertReferenceFrame(LatLon.referenceFrames.ITRF2005, 2010.4559);
-        test('Appendix A roundtrip', () => itrf2005ʹ.toString('dms', 5, 4, true).should.equal('23°40′12.41482″S, 133°53′07.86712″E +603.2562m (ITRF2005@2010.4559)'));
+        // note variations in final decimal for gda94ˣ, gda94ᶻ, gda94powerofphi – difference in rounding and/or Cartesian.toLatLon()?
+        const itrf2005prime = gda94.convertReferenceFrame(LatLon.referenceFrames.ITRF2005, 2010.4559);
+        test('Appendix A roundtrip', () => itrf2005prime.toString('dms', 5, 4, true).should.equal('23°40′12.41482″S, 133°53′07.86712″E +603.2562m (ITRF2005@2010.4559)'));
     });
 
     describe('Proj4 Onsala observatory', function() { // https://github.com/OSGeo/proj.4/blob/2aaf53/test/gie/more_builtins.gie#L357

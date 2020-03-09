@@ -15,8 +15,8 @@ describe('latlon-nvector-spherical', function() {
     const test = it;    // just an alias
     Dms.separator = ''; // tests are easier without any DMS separator
     const R = 6371e3;
-    const π = Math.PI;
-    const ε = Number.EPSILON;
+    const pi = Math.PI;
+    const epsilon = Number.EPSILON;
 
     describe('@examples', function() {
         test('constructor',                 () => new LatLon(52.205, 0.119).toString().should.equal('52.2050°N, 000.1190°E'));
@@ -227,10 +227,10 @@ describe('latlon-nvector-spherical', function() {
         const polyTriangle = [ new LatLon(1, 1), new LatLon(2, 1), new LatLon(1, 2) ];
         const polySquareCw = [ new LatLon(1, 1), new LatLon(2, 1), new LatLon(2, 2), new LatLon(1, 2) ];
         const polySquareCcw = [ new LatLon(1, 1), new LatLon(1, 2), new LatLon(2, 2), new LatLon(2, 1) ];
-        const polyOctant = [ new LatLon(0, ε), new LatLon(90, 0), new LatLon(0, 90-ε) ];
-        const polyOctantS = [ new LatLon(-ε, ε), new LatLon(90, 0), new LatLon(-ε, 90-ε) ];
-        // const polyQuadrant = [ new LatLon(ε, ε), new LatLon(90, ε), new LatLon(ε, 180-ε), new LatLon(ε, 90) ];
-        const polyHemiE = [ new LatLon(ε, ε), new LatLon(90-ε, 0), new LatLon(90-ε, 180), new LatLon(ε, 180), new LatLon(-ε, 180), new LatLon(-90+ε, 180), new LatLon(-90+ε, 0), new LatLon(-ε, ε) ];
+        const polyOctant = [ new LatLon(0, epsilon), new LatLon(90, 0), new LatLon(0, 90-epsilon) ];
+        const polyOctantS = [ new LatLon(-epsilon, epsilon), new LatLon(90, 0), new LatLon(-epsilon, 90-epsilon) ];
+        // const polyQuadrant = [ new LatLon(epsilon, epsilon), new LatLon(90, epsilon), new LatLon(epsilon, 180-epsilon), new LatLon(epsilon, 90) ];
+        const polyHemiE = [ new LatLon(epsilon, epsilon), new LatLon(90-epsilon, 0), new LatLon(90-epsilon, 180), new LatLon(epsilon, 180), new LatLon(-epsilon, 180), new LatLon(-90+epsilon, 180), new LatLon(-90+epsilon, 0), new LatLon(-epsilon, epsilon) ];
         const polyGc = [ new LatLon(10, 0), new LatLon(10, 90), new LatLon(0, 45) ];
         const polyPole = [ new LatLon(89, 0), new LatLon(89, 120), new LatLon(89, -120) ];
         const polyPoleEdge = [ new LatLon(85, 90), new LatLon(85, 0), new LatLon(85, -90) ];
@@ -241,10 +241,10 @@ describe('latlon-nvector-spherical', function() {
         test('triangle area closed',  () => LatLon.areaOf(polyTriangle.concat(polyTriangle[0])).toFixed(0).should.equal('6181527888'));
         test('square cw area',        () => LatLon.areaOf(polySquareCw).toFixed(0).should.equal('12360230987'));
         test('square ccw area',       () => LatLon.areaOf(polySquareCcw).toFixed(0).should.equal('12360230987'));
-        test('octant area',           () => LatLon.areaOf(polyOctant).should.equal(π*R*R/2));
-        test('super-octant area',     () => LatLon.areaOf(polyOctantS).should.equal(π*R*R/2));
-        // TODO: fails: test('quadrant area', () => LatLon.areaOf(polyQuadrant).should.equal(π*R*R));
-        test('hemisphere area',       () => LatLon.areaOf(polyHemiE).toFixed(1).should.equal((2*π*R*R).toFixed(1)));
+        test('octant area',           () => LatLon.areaOf(polyOctant).should.equal(pi*R*R/2));
+        test('super-octant area',     () => LatLon.areaOf(polyOctantS).should.equal(pi*R*R/2));
+        // TODO: fails: test('quadrant area', () => LatLon.areaOf(polyQuadrant).should.equal(pi*R*R));
+        test('hemisphere area',       () => LatLon.areaOf(polyHemiE).toFixed(1).should.equal((2*pi*R*R).toFixed(1)));
         test('pole area',             () => LatLon.areaOf(polyPole).toFixed(0).should.equal('16063139192'));
         test('concave area',          () => LatLon.areaOf(polyConcave).toFixed(0).should.equal('74042699236'));
 
@@ -261,7 +261,7 @@ describe('latlon-nvector-spherical', function() {
     describe('Ed Williams', function() { // www.edwilliams.org/avform.htm
         const lax = new LatLon(Dms.parse('33° 57′N'), Dms.parse('118° 24′W'));
         const jfk = new LatLon(Dms.parse('40° 38′N'), Dms.parse('073° 47′W'));
-        const r = 180*60/π; // earth radius in nautical miles
+        const r = 180*60/pi; // earth radius in nautical miles
         test('distance nm',   () => lax.distanceTo(jfk, r).toPrecision(4).should.equal('2144'));
         test('bearing',       () => lax.initialBearingTo(jfk).toPrecision(2).should.equal('66'));
         test('intermediate',  () => lax.intermediatePointTo(jfk, 100/2144).toString('dm', 0).should.equal('34°37′N, 116°33′W'));

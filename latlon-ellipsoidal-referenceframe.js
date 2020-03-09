@@ -471,11 +471,11 @@ class Cartesian_ReferenceFrame extends Cartesian {
      *
      * @private
      * @param   {number[]} params - Transform parameters tx, ty, tz, s, rx, ry, rz..
-     * @param   {number[]} rates - Rate of change of transform parameters ṫx, ṫy, ṫz, ṡ, ṙx, ṙy, ṙz.
-     * @param   {number}   δt - Period between reference and observed epochs, t − t₀.
+     * @param   {number[]} rates - Rate of change of transform parameters tdotx, tdoty, tdotz, sdot, rdotx, rdoty, rdotz.
+     * @param   {number}   deltat - Period between reference and observed epochs, t − t₀.
      * @returns {Cartesian} Transformed point (without reference frame).
      */
-    applyTransform(params, rates, δt)   {
+    applyTransform(params, rates, deltat)   {
         // this point
         const x1 = this.x, y1 = this.y, z1 = this.z;
 
@@ -489,18 +489,18 @@ class Cartesian_ReferenceFrame extends Cartesian {
         const rz = (params[6]/3600/1000).toRadians(); // z-rotation: normalise milliarcseconds to radians
 
         // rate parameters
-        const ṫx = rates[0]/1000;                     // x-shift: normalise millimetres to metres
-        const ṫy = rates[1]/1000;                     // y-shift: normalise millimetres to metres
-        const ṫz = rates[2]/1000;                     // z-shift: normalise millimetres to metres
-        const ṡ  = rates[3]/1e9;                      // scale: normalise parts-per-billion
-        const ṙx = (rates[4]/3600/1000).toRadians();  // x-rotation: normalise milliarcseconds to radians
-        const ṙy = (rates[5]/3600/1000).toRadians();  // y-rotation: normalise milliarcseconds to radians
-        const ṙz = (rates[6]/3600/1000).toRadians();  // z-rotation: normalise milliarcseconds to radians
+        const tdotx = rates[0]/1000;                     // x-shift: normalise millimetres to metres
+        const tdoty = rates[1]/1000;                     // y-shift: normalise millimetres to metres
+        const tdotz = rates[2]/1000;                     // z-shift: normalise millimetres to metres
+        const sdot  = rates[3]/1e9;                      // scale: normalise parts-per-billion
+        const rdotx = (rates[4]/3600/1000).toRadians();  // x-rotation: normalise milliarcseconds to radians
+        const rdoty = (rates[5]/3600/1000).toRadians();  // y-rotation: normalise milliarcseconds to radians
+        const rdotz = (rates[6]/3600/1000).toRadians();  // z-rotation: normalise milliarcseconds to radians
 
         // combined (normalised) parameters
-        const T = { x: tx + ṫx*δt, y: ty + ṫy*δt, z: tz + ṫz*δt };
-        const R = { x: rx + ṙx*δt, y: ry + ṙy*δt, z: rz + ṙz*δt };
-        const S = 1 + s + ṡ*δt;
+        const T = { x: tx + tdotx*deltat, y: ty + tdoty*deltat, z: tz + tdotz*deltat };
+        const R = { x: rx + rdotx*deltat, y: ry + rdoty*deltat, z: rz + rdotz*deltat };
+        const S = 1 + s + sdot*deltat;
 
         // apply transform (shift, scale, rotate)
         const x2 = T.x + x1*S   - y1*R.z + z1*R.y;

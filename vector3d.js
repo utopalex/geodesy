@@ -173,8 +173,8 @@ class Vector3d {
      * @param   {Vector3d} v - Vector whose angle is to be determined from ‘this’ vector.
      * @param   {Vector3d} [n] - Plane normal: if supplied, angle is signed +ve if this->v is
      *                     clockwise looking along n, -ve in opposite direction.
-     * @returns {number}   Angle (in radians) between this vector and supplied vector (in range 0..π
-     *                     if n not supplied, range -π..+π if n supplied).
+     * @returns {number}   Angle (in radians) between this vector and supplied vector (in range 0..pi
+     *                     if n not supplied, range -pi..+pi if n supplied).
      */
     angleTo(v, n=undefined) {
         if (!(v instanceof Vector3d)) throw new TypeError('v is not Vector3d object');
@@ -186,10 +186,10 @@ class Vector3d {
         // if n·p₁×p₂ is -ve, negate |p₁×p₂|
         const sign = n==undefined || this.cross(v).dot(n)>=0 ? 1 : -1;
 
-        const sinθ = this.cross(v).length * sign;
-        const cosθ = this.dot(v);
+        const sintheta = this.cross(v).length * sign;
+        const costheta = this.dot(v);
 
-        return Math.atan2(sinθ, cosθ);
+        return Math.atan2(sintheta, costheta);
     }
 
 
@@ -203,15 +203,15 @@ class Vector3d {
     rotateAround(axis, angle) {
         if (!(axis instanceof Vector3d)) throw new TypeError('axis is not Vector3d object');
 
-        const θ = angle.toRadians();
+        const theta = angle.toRadians();
 
         // en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_and_angle
         // en.wikipedia.org/wiki/Quaternions_and_spatial_rotation#Quaternion-derived_rotation_matrix
         const p = this.unit();
         const a = axis.unit();
 
-        const s = Math.sin(θ);
-        const c = Math.cos(θ);
+        const s = Math.sin(theta);
+        const c = Math.cos(theta);
         const t = 1-c;
         const x = a.x, y = a.y, z = a.z;
 

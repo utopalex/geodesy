@@ -54,9 +54,9 @@ describe('os-gridref', function() {
         const osgb2 = gridref.toLatLon(LatLon.datums.OSGB36);
         test('C1 round-trip',       () => osgb2.toString('dms', 4).should.equal('52°39′27.2531″N, 001°43′04.5177″E'));
 
-        const gridrefʹ = new OsGridRef(651409.903, 313177.270);
-        const osgbʹ = gridrefʹ.toLatLon(LatLon.datums.OSGB36);
-        test('C2',                  () => osgbʹ.toString('dms', 4).should.equal('52°39′27.2531″N, 001°43′04.5177″E'));
+        const gridrefprime = new OsGridRef(651409.903, 313177.270);
+        const osgbprime = gridrefprime.toLatLon(LatLon.datums.OSGB36);
+        test('C2',                  () => osgbprime.toString('dms', 4).should.equal('52°39′27.2531″N, 001°43′04.5177″E'));
         const gridref2 = osgb.toOsGrid();
         test('C2 E round-trip',     () => gridref2.easting.toFixed(3).should.equal('651409.903'));
         test('C2 N round-trip',     () => gridref2.northing.toFixed(3).should.equal('313177.270'));

@@ -97,7 +97,7 @@ describe('latlon-ellipsoidal-vincenty', function() {
     });
 
     describe('convergence', function() {
-        test('vincenty antipodal λ > π',       () => new LatLon(0.0, 0.0).distanceTo(new LatLon(0.5, 179.7)).should.be.NaN);
+        test('vincenty antipodal lambda > pi',       () => new LatLon(0.0, 0.0).distanceTo(new LatLon(0.5, 179.7)).should.be.NaN);
         test('vincenty antipodal convergence', () => new LatLon(5.0, 0.0).distanceTo(new LatLon(-5.1, 179.4)).should.be.NaN);
     });
 

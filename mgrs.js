@@ -56,7 +56,7 @@ class Mgrs {
      *
      * @param  {number} zone - 6° longitudinal zone (1..60 covering 180°W..180°E).
      * @param  {string} band - 8° latitudinal band (C..X covering 80°S..84°N).
-     * @param  {string} e100k - First letter (E) of 100km grid square.
+     * @param  {string} e100k - prime letter (E) of 100km grid square.
      * @param  {string} n100k - Second letter (N) of 100km grid square.
      * @param  {number} easting - Easting in metres within 100km grid square.
      * @param  {number} northing - Northing in metres within 100km grid square.

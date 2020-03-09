@@ -8,7 +8,7 @@
 import Vector3d from './vector3d.js';
 import Dms      from './dms.js';
 
-const π = Math.PI;
+const pi = Math.PI;
 
 
 /**
@@ -114,16 +114,16 @@ class LatLonNvectorSpherical {
      *   const v = p.toNvector();      // [0.5000,0.5000,0.7071]
      */
     toNvector() { // note: replicated in LatLon_NvectorEllipsoidal
-        const φ = this.lat.toRadians();
-        const λ = this.lon.toRadians();
+        const phi = this.lat.toRadians();
+        const lambda = this.lon.toRadians();
 
-        const sinφ = Math.sin(φ), cosφ = Math.cos(φ);
-        const sinλ = Math.sin(λ), cosλ = Math.cos(λ);
+        const sinphi = Math.sin(phi), cosphi = Math.cos(phi);
+        const sinlambda = Math.sin(lambda), coslambda = Math.cos(lambda);
 
         // right-handed vector: x -> 0°E,0°N; y -> 90°E,0°N, z -> 90°N
-        const x = cosφ * cosλ;
-        const y = cosφ * sinλ;
-        const z = sinφ;
+        const x = cosphi * coslambda;
+        const y = cosphi * sinlambda;
+        const z = sinphi;
 
         return new NvectorSpherical(x, y, z);
     }
@@ -144,13 +144,13 @@ class LatLonNvectorSpherical {
      *   const gc = p1.greatCircle(96.0);         // [-0.794,0.129,0.594]
      */
     greatCircle(bearing) {
-        const φ = this.lat.toRadians();
-        const λ = this.lon.toRadians();
-        const θ = Number(bearing).toRadians();
+        const phi = this.lat.toRadians();
+        const lambda = this.lon.toRadians();
+        const theta = Number(bearing).toRadians();
 
-        const x =  Math.sin(λ) * Math.cos(θ) - Math.sin(φ) * Math.cos(λ) * Math.sin(θ);
-        const y = -Math.cos(λ) * Math.cos(θ) - Math.sin(φ) * Math.sin(λ) * Math.sin(θ);
-        const z =  Math.cos(φ) * Math.sin(θ);
+        const x =  Math.sin(lambda) * Math.cos(theta) - Math.sin(phi) * Math.cos(lambda) * Math.sin(theta);
+        const y = -Math.cos(lambda) * Math.cos(theta) - Math.sin(phi) * Math.sin(lambda) * Math.sin(theta);
+        const z =  Math.cos(phi) * Math.sin(theta);
 
         return new Vector3d(x, y, z);
     }
@@ -178,11 +178,11 @@ class LatLonNvectorSpherical {
         const n1 = this.toNvector();
         const n2 = point.toNvector();
 
-        const sinθ = n1.cross(n2).length;
-        const cosθ = n1.dot(n2);
-        const δ = Math.atan2(sinθ, cosθ); // tanδ = |n₁×n₂| / n₁⋅n₂
+        const sintheta = n1.cross(n2).length;
+        const costheta = n1.dot(n2);
+        const delta = Math.atan2(sintheta, costheta); // tandelta = |n₁×n₂| / n₁⋅n₂
 
-        return δ * R;
+        return delta * R;
     }
 
 
@@ -210,9 +210,9 @@ class LatLonNvectorSpherical {
         const c1 = p1.cross(p2); // great circle through p1 & p2
         const c2 = p1.cross(N);  // great circle through p1 & north pole
 
-        const θ = c1.angleTo(c2, p1); // bearing is (signed) angle between c1 & c2
+        const theta = c1.angleTo(c2, p1); // bearing is (signed) angle between c1 & c2
 
-        return Dms.wrap360(θ.toDegrees()); // normalise to range 0..360°
+        return Dms.wrap360(theta.toDegrees()); // normalise to range 0..360°
     }
 
 
@@ -278,23 +278,23 @@ class LatLonNvectorSpherical {
         if (!(point instanceof LatLonNvectorSpherical)) throw new TypeError(`invalid point ‘${point}’`);
         if (isNaN(fraction)) throw new TypeError(`invalid fraction ‘${fraction}’`);
 
-        // angular distance between points; tanδ = |n₁×n₂| / n₁⋅n₂
+        // angular distance between points; tandelta = |n₁×n₂| / n₁⋅n₂
         const n1 = this.toNvector();
         const n2 = point.toNvector();
-        const sinθ = n1.cross(n2).length;
-        const cosθ = n1.dot(n2);
-        const δ = Math.atan2(sinθ, cosθ);
+        const sintheta = n1.cross(n2).length;
+        const costheta = n1.dot(n2);
+        const delta = Math.atan2(sintheta, costheta);
 
         // interpolated angular distance on straight line between points
-        const δi = δ * Number(fraction);
-        const sinδi = Math.sin(δi);
-        const cosδi = Math.cos(δi);
+        const deltai = delta * Number(fraction);
+        const sindeltai = Math.sin(deltai);
+        const cosdeltai = Math.cos(deltai);
 
         // direction vector (perpendicular to n1 in plane of n2)
         const d = n1.cross(n2).unit().cross(n1); // unit(n₁×n₂) × n₁
 
         // interpolated position
-        const int = n1.times(cosδi).plus(d.times(sinδi)); // n₁⋅cosδᵢ + d⋅sinδᵢ
+        const int = n1.times(cosdeltai).plus(d.times(sindeltai)); // n₁⋅cosdeltaᵢ + d⋅sindeltaᵢ
 
         return new NvectorSpherical(int.x, int.y, int.z).toLatLon();
     }
@@ -343,21 +343,21 @@ class LatLonNvectorSpherical {
      */
     destinationPoint(distance, bearing, radius=6371e3) {
         const n1 = this.toNvector();           // Gade's n_EA_E
-        const δ = distance / radius;           // angular distance in radians
-        const θ = Number(bearing).toRadians(); // initial bearing in radians
+        const delta = distance / radius;           // angular distance in radians
+        const theta = Number(bearing).toRadians(); // initial bearing in radians
 
         const N = new NvectorSpherical(0, 0, 1);     // north pole
 
         const de = N.cross(n1).unit();               // east direction vector @ n1 (Gade's k_e_E)
         const dn = n1.cross(de);                     // north direction vector @ n1 (Gade's (k_n_E)
 
-        const deSinθ = de.times(Math.sin(θ));
-        const dnCosθ = dn.times(Math.cos(θ));
+        const deSintheta = de.times(Math.sin(theta));
+        const dnCostheta = dn.times(Math.cos(theta));
 
-        const d = dnCosθ.plus(deSinθ);               // direction vector @ n1 (≡ C×n1; C = great circle)
+        const d = dnCostheta.plus(deSintheta);               // direction vector @ n1 (≡ C×n1; C = great circle)
 
-        const x = n1.times(Math.cos(δ));             // component of n2 parallel to n1
-        const y = d.times(Math.sin(δ));              // component of n2 perpendicular to n1
+        const x = n1.times(Math.cos(delta));             // component of n2 parallel to n1
+        const y = d.times(Math.sin(delta));              // component of n2 perpendicular to n1
 
         const n2 = x.plus(y);                        // Gade's n_EB_E
 
@@ -368,8 +368,8 @@ class LatLonNvectorSpherical {
     /**
      * Returns the point of intersection of two paths each defined by point pairs or start point and bearing.
      *
-     * @param   {LatLon}        path1start - Start point of first path.
-     * @param   {LatLon|number} path1brngEnd - End point of first path or initial bearing from first start point.
+     * @param   {LatLon}        path1start - Start point of prime path.
+     * @param   {LatLon|number} path1brngEnd - End point of prime path or initial bearing from prime start point.
      * @param   {LatLon}        path2start - Start point of second path.
      * @param   {LatLon|number} path2brngEnd - End point of second path or initial bearing from second start point.
      * @returns {LatLon}        Destination point (null if no unique intersection defined)
@@ -490,9 +490,9 @@ class LatLonNvectorSpherical {
             ? pathStart.toNvector().cross(pathBrngEnd.toNvector()) // great circle defined by two points
             : pathStart.greatCircle(pathBrngEnd);                  // great circle defined by point + bearing
 
-        const α = gc.angleTo(p) - π/2; // angle between point & great-circle
+        const alpha = gc.angleTo(p) - pi/2; // angle between point & great-circle
 
-        return α * R;
+        return alpha * R;
     }
 
 
@@ -526,9 +526,9 @@ class LatLonNvectorSpherical {
 
         const pat = gc.cross(p).cross(gc); // along-track point c × p × c
 
-        const α = pathStart.toNvector().angleTo(pat, gc); // angle between start point and along-track point
+        const alpha = pathStart.toNvector().angleTo(pat, gc); // angle between start point and along-track point
 
-        return α * R;
+        return alpha * R;
     }
 
 
@@ -582,7 +582,7 @@ class LatLonNvectorSpherical {
      * within the area bound by perpendiculars to the great circle at each point (in the same
      * hemisphere).
      *
-     * @param   {LatLon}  point1 - First point defining segment.
+     * @param   {LatLon}  point1 - prime point defining segment.
      * @param   {LatLon}  point2 - Second point defining segment.
      * @returns {boolean} Whether this point is within extent of segment.
      *
@@ -597,12 +597,12 @@ class LatLonNvectorSpherical {
         const n0 = this.toNvector(), n1 = point1.toNvector(), n2 = point2.toNvector(); // n-vectors
 
         // get vectors representing p0->p1, p0->p2, p1->p2, p2->p1
-        const δ10 = n0.minus(n1), δ12 = n2.minus(n1);
-        const δ20 = n0.minus(n2), δ21 = n1.minus(n2);
+        const delta10 = n0.minus(n1), delta12 = n2.minus(n1);
+        const delta20 = n0.minus(n2), delta21 = n1.minus(n2);
 
-        // dot product δ10⋅δ12 tells us if p0 is on p2 side of p1, similarly for δ20⋅δ21
-        const extent1 = δ10.dot(δ12);
-        const extent2 = δ20.dot(δ21);
+        // dot product delta10⋅delta12 tells us if p0 is on p2 side of p1, similarly for delta20⋅delta21
+        const extent1 = delta10.dot(delta12);
+        const extent2 = delta20.dot(delta21);
 
         const isSameHemisphere = n0.dot(n1)>=0 && n0.dot(n2)>=0;
 
@@ -613,8 +613,8 @@ class LatLonNvectorSpherical {
     /**
      * Locates a point given two known locations and bearings from those locations.
      *
-     * @param   {LatLon} point1 - First reference point.
-     * @param   {number} bearing1 - Bearing (in degrees from north) from first reference point.
+     * @param   {LatLon} point1 - prime reference point.
+     * @param   {number} bearing1 - Bearing (in degrees from north) from prime reference point.
      * @param   {LatLon} point2 - Second reference point.
      * @param   {number} bearing2 - Bearing (in degrees from north) from second reference point.
      * @returns {LatLon} Triangulated point.
@@ -624,24 +624,24 @@ class LatLonNvectorSpherical {
      *   const p = LatLon.triangulate(p1, 333.3508, p2, 310.1414); // 51.1297°N, 001.3214°E
      */
     static triangulate(point1, bearing1, point2, bearing2) {
-        const n1 = point1.toNvector(), θ1 = Number(bearing1).toRadians();
-        const n2 = point2.toNvector(), θ2 = Number(bearing2).toRadians();
+        const n1 = point1.toNvector(), theta1 = Number(bearing1).toRadians();
+        const n2 = point2.toNvector(), theta2 = Number(bearing2).toRadians();
 
         const N = new NvectorSpherical(0, 0, 1); // north pole
 
         const de1 = N.cross(n1).unit();          // east vector @ n1
         const dn1 = n1.cross(de1);               // north vector @ n1
-        const de1Sinθ = de1.times(Math.sin(θ1));
-        const dn1Cosθ = dn1.times(Math.cos(θ1));
-        const d1 = dn1Cosθ.plus(de1Sinθ);        // direction vector @ n1
+        const de1Sintheta = de1.times(Math.sin(theta1));
+        const dn1Costheta = dn1.times(Math.cos(theta1));
+        const d1 = dn1Costheta.plus(de1Sintheta);        // direction vector @ n1
 
         const c1 = n1.cross(d1);                 // great circle p1 + bearing1
 
         const de2 = N.cross(n2).unit();          // east vector @ n2
         const dn2 = n2.cross(de2);               // north vector @ n2
-        const de2Sinθ = de2.times(Math.sin(θ2));
-        const dn2Cosθ = dn2.times(Math.cos(θ2));
-        const d2 = dn2Cosθ.plus(de2Sinθ);        // direction vector @ n2
+        const de2Sintheta = de2.times(Math.sin(theta2));
+        const dn2Costheta = dn2.times(Math.cos(theta2));
+        const d2 = dn2Costheta.plus(de2Sintheta);        // direction vector @ n2
 
         const c2 = n2.cross(d2);                 // great circle p2 + bearing2
 
@@ -654,8 +654,8 @@ class LatLonNvectorSpherical {
     /**
      * Locates a latitude/longitude point at given distances from three other points.
      *
-     * @param   {LatLon} point1 - First reference point.
-     * @param   {number} distance1 - Distance to first reference point (same units as radius).
+     * @param   {LatLon} point1 - prime reference point.
+     * @param   {number} distance1 - Distance to prime reference point (same units as radius).
      * @param   {LatLon} point2 - Second reference point.
      * @param   {number} distance2 - Distance to second reference point (same units as radius).
      * @param   {LatLon} point3 - Third reference point.
@@ -669,9 +669,9 @@ class LatLonNvectorSpherical {
     static trilaterate(point1, distance1, point2, distance2, point3, distance3, radius=6371e3) {
         // from en.wikipedia.org/wiki/Trilateration
 
-        const n1 = point1.toNvector(), δ1 = Number(distance1)/Number(radius);
-        const n2 = point2.toNvector(), δ2 = Number(distance2)/Number(radius);
-        const n3 = point3.toNvector(), δ3 = Number(distance3)/Number(radius);
+        const n1 = point1.toNvector(), delta1 = Number(distance1)/Number(radius);
+        const n2 = point2.toNvector(), delta2 = Number(distance2)/Number(radius);
+        const n3 = point3.toNvector(), delta3 = Number(distance3)/Number(radius);
 
         // the following uses x,y coordinate system with origin at n1, x axis n1->n2
         const eX = n2.minus(n1).unit();                        // unit vector in x direction n1->n2
@@ -679,10 +679,10 @@ class LatLonNvectorSpherical {
         const eY = n3.minus(n1).minus(eX.times(i)).unit();     // unit vector in y direction
         const d = n2.minus(n1).length;                         // distance n1->n2
         const j = eY.dot(n3.minus(n1));                        // signed magnitude of y component of n1->n3
-        const x = (δ1*δ1 - δ2*δ2 + d*d) / (2*d);               // x component of n1 -> intersection
-        const y = (δ1*δ1 - δ3*δ3 + i*i + j*j) / (2*j) - x*i/j; // y component of n1 -> intersection
+        const x = (delta1*delta1 - delta2*delta2 + d*d) / (2*d);               // x component of n1 -> intersection
+        const y = (delta1*delta1 - delta3*delta3 + i*i + j*j) / (2*j) - x*i/j; // y component of n1 -> intersection
         // const eZ = eX.cross(eY);                            // unit vector perpendicular to plane
-        // const z = Math.sqrt(δ1*δ1 - x*x - y*y);             // z will be NaN for no intersections
+        // const z = Math.sqrt(delta1*delta1 - x*x - y*y);             // z will be NaN for no intersections
 
         if (!isFinite(x) || !isFinite(y)) return null; // coincident points?
 
@@ -710,7 +710,7 @@ class LatLonNvectorSpherical {
         // will sum to less than 360° (due to spherical excess), exterior point angles will be small
         // but non-zero. TODO: are any winding number optimisations applicable to spherical surface?
 
-        // close the polygon so that the last point equals the first point
+        // close the polygon so that the last point equals the prime point
         const closed = polygon[0].equals(polygon[polygon.length-1]);
         if (!closed) polygon.push(polygon[0]);
 
@@ -724,14 +724,14 @@ class LatLonNvectorSpherical {
         vectorToVertex.push(vectorToVertex[0]);
 
         // sum subtended angles of each edge (using vector p to determine sign)
-        let Σθ = 0;
+        let sigmatheta = 0;
         for (let v=0; v<nVertices; v++) {
-            Σθ += vectorToVertex[v].angleTo(vectorToVertex[v+1], p);
+            sigmatheta += vectorToVertex[v].angleTo(vectorToVertex[v+1], p);
         }
 
         if (!closed) polygon.pop(); // restore polygon to pristine condition
 
-        return Math.abs(Σθ) > π;
+        return Math.abs(sigmatheta) > pi;
     }
 
 
@@ -739,7 +739,7 @@ class LatLonNvectorSpherical {
      * Calculates the area of a spherical polygon where the sides of the polygon are great circle
      * arcs joining the vertices.
      *
-     * Uses Girard’s theorem: A = [Σθᵢ − (n−2)·π]·R²
+     * Uses Girard’s theorem: A = [sigmathetaᵢ − (n−2)·pi]·R²
      *
      * @param   {LatLon[]} polygon - Array of points defining vertices of the polygon.
      * @param   {number}   [radius=6371e3] - (Mean) radius of earth (defaults to radius in metres).
@@ -752,7 +752,7 @@ class LatLonNvectorSpherical {
     static areaOf(polygon, radius=6371e3) {
         const R = Number(radius);
 
-        // close the polygon so that the last point equals the first point
+        // close the polygon so that the last point equals the prime point
         const closed = polygon[0].equals(polygon[polygon.length-1]);
         if (!closed) polygon.push(polygon[0]);
 
@@ -768,19 +768,19 @@ class LatLonNvectorSpherical {
         c.push(c[0]);
 
         // sum interior angles; depending on whether polygon is cw or ccw, angle between edges is
-        // π−α or π+α, where α is angle between great-circle vectors; so sum α, then take n·π − |Σα|
-        // (cannot use Σ(π−|α|) as concave polygons would fail); use vector to 1st point as plane
-        // normal for sign of α
+        // pi−alpha or pi+alpha, where alpha is angle between great-circle vectors; so sum alpha, then take n·pi − |sigmaalpha|
+        // (cannot use sigma(pi−|alpha|) as concave polygons would fail); use vector to 1st point as plane
+        // normal for sign of alpha
         const n1 = polygon[0].toNvector();
-        let Σα = 0;
-        for (let v=0; v<n; v++) Σα += c[v].angleTo(c[v+1], n1);
-        const Σθ = n*π - Math.abs(Σα);
+        let sigmaalpha = 0;
+        for (let v=0; v<n; v++) sigmaalpha += c[v].angleTo(c[v+1], n1);
+        const sigmatheta = n*pi - Math.abs(sigmaalpha);
 
         // note: angle between two sides of a spherical triangle is acos(c₁·c₂) where cₙ is the
         // plane normal vector to the great circle representing the triangle side - use this instead
         // of angleTo()?
 
-        const E = (Σθ - (n-2)*π); // spherical excess (in steradians)
+        const E = (sigmatheta - (n-2)*pi); // spherical excess (in steradians)
         const A = E * R*R;        // area in units of R²
 
         if (!closed) polygon.pop(); // restore polygon to pristine condition
@@ -920,14 +920,14 @@ class NvectorSpherical extends Vector3d {
      *   const p = n.toLatLon(); // 45.0°N, 045.0°E
      */
     toLatLon() {
-        // tanφ = z / √(x²+y²), tanλ = y / x (same as ellipsoidal calculation)
+        // tanphi = z / √(x²+y²), tanlambda = y / x (same as ellipsoidal calculation)
 
         const x = this.x, y = this.y, z = this.z;
 
-        const φ = Math.atan2(z, Math.sqrt(x*x + y*y));
-        const λ = Math.atan2(y, x);
+        const phi = Math.atan2(z, Math.sqrt(x*x + y*y));
+        const lambda = Math.atan2(y, x);
 
-        return new LatLonNvectorSpherical(φ.toDegrees(), λ.toDegrees());
+        return new LatLonNvectorSpherical(phi.toDegrees(), lambda.toDegrees());
     }
 
 
@@ -947,14 +947,14 @@ class NvectorSpherical extends Vector3d {
      *   const gc = n1.greatCircle(96.0); // [-0.794,0.129,0.594]
      */
     greatCircle(bearing) {
-        const θ = Number(bearing).toRadians();
+        const theta = Number(bearing).toRadians();
 
         const N = new Vector3d(0, 0, 1); // n-vector representing north pole
         const e = N.cross(this);         // easting
         const n = this.cross(e);         // northing
-        const eʹ = e.times(Math.cos(θ)/e.length);
-        const nʹ = n.times(Math.sin(θ)/n.length);
-        const c = nʹ.minus(eʹ);
+        const eprime = e.times(Math.cos(theta)/e.length);
+        const nprime = n.times(Math.sin(theta)/n.length);
+        const c = nprime.minus(eprime);
 
         return c;
     }

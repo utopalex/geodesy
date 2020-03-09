@@ -83,45 +83,45 @@ class OsGridRef {
 
         const a = 6377563.396, b = 6356256.909;             // Airy 1830 major & minor semi-axes
         const F0 = 0.9996012717;                            // NatGrid scale factor on central meridian
-        const φ0 = (49).toRadians(), λ0 = (-2).toRadians(); // NatGrid true origin is 49°N,2°W
+        const phi0 = (49).toRadians(), lambda0 = (-2).toRadians(); // NatGrid true origin is 49°N,2°W
         const N0 = -100e3, E0 = 400e3;                      // northing & easting of true origin, metres
         const e2 = 1 - (b*b)/(a*a);                         // eccentricity squared
         const n = (a-b)/(a+b), n2 = n*n, n3 = n*n*n;        // n, n², n³
 
-        let φ=φ0, M=0;
+        let phi=phi0, M=0;
         do {
-            φ = (N-N0-M)/(a*F0) + φ;
+            phi = (N-N0-M)/(a*F0) + phi;
 
-            const Ma = (1 + n + (5/4)*n2 + (5/4)*n3) * (φ-φ0);
-            const Mb = (3*n + 3*n*n + (21/8)*n3) * Math.sin(φ-φ0) * Math.cos(φ+φ0);
-            const Mc = ((15/8)*n2 + (15/8)*n3) * Math.sin(2*(φ-φ0)) * Math.cos(2*(φ+φ0));
-            const Md = (35/24)*n3 * Math.sin(3*(φ-φ0)) * Math.cos(3*(φ+φ0));
+            const Ma = (1 + n + (5/4)*n2 + (5/4)*n3) * (phi-phi0);
+            const Mb = (3*n + 3*n*n + (21/8)*n3) * Math.sin(phi-phi0) * Math.cos(phi+phi0);
+            const Mc = ((15/8)*n2 + (15/8)*n3) * Math.sin(2*(phi-phi0)) * Math.cos(2*(phi+phi0));
+            const Md = (35/24)*n3 * Math.sin(3*(phi-phi0)) * Math.cos(3*(phi+phi0));
             M = b * F0 * (Ma - Mb + Mc - Md);               // meridional arc
 
         } while (Math.abs(N-N0-M) >= 0.00001);  // ie until < 0.01mm
 
-        const cosφ = Math.cos(φ), sinφ = Math.sin(φ);
-        const ν = a*F0/Math.sqrt(1-e2*sinφ*sinφ);             // nu = transverse radius of curvature
-        const ρ = a*F0*(1-e2)/Math.pow(1-e2*sinφ*sinφ, 1.5);     // rho = meridional radius of curvature
-        const η2 = ν/ρ-1;                                   // eta = ?
+        const cosphi = Math.cos(phi), sinphi = Math.sin(phi);
+        const ny = a*F0/Math.sqrt(1-e2*sinphi*sinphi);             // nu = transverse radius of curvature
+        const rho = a*F0*(1-e2)/Math.pow(1-e2*sinphi*sinphi, 1.5);     // rho = meridional radius of curvature
+        const eta2 = ny/rho-1;                                   // eta = ?
 
-        const tanφ = Math.tan(φ);
-        const tan2φ = tanφ*tanφ, tan4φ = tan2φ*tan2φ, tan6φ = tan4φ*tan2φ;
-        const secφ = 1/cosφ;
-        const ν3 = ν*ν*ν, ν5 = ν3*ν*ν, ν7 = ν5*ν*ν;
-        const VII = tanφ/(2*ρ*ν);
-        const VIII = tanφ/(24*ρ*ν3)*(5+3*tan2φ+η2-9*tan2φ*η2);
-        const IX = tanφ/(720*ρ*ν5)*(61+90*tan2φ+45*tan4φ);
-        const X = secφ/ν;
-        const XI = secφ/(6*ν3)*(ν/ρ+2*tan2φ);
-        const XII = secφ/(120*ν5)*(5+28*tan2φ+24*tan4φ);
-        const XIIA = secφ/(5040*ν7)*(61+662*tan2φ+1320*tan4φ+720*tan6φ);
+        const tanphi = Math.tan(phi);
+        const tan2phi = tanphi*tanphi, tan4phi = tan2phi*tan2phi, tan6phi = tan4phi*tan2phi;
+        const secphi = 1/cosphi;
+        const ny3 = ny*ny*ny, ny5 = ny3*ny*ny, ny7 = ny5*ny*ny;
+        const VII = tanphi/(2*rho*ny);
+        const VIII = tanphi/(24*rho*ny3)*(5+3*tan2phi+eta2-9*tan2phi*eta2);
+        const IX = tanphi/(720*rho*ny5)*(61+90*tan2phi+45*tan4phi);
+        const X = secphi/ny;
+        const XI = secphi/(6*ny3)*(ny/rho+2*tan2phi);
+        const XII = secphi/(120*ny5)*(5+28*tan2phi+24*tan4phi);
+        const XIIA = secphi/(5040*ny7)*(61+662*tan2phi+1320*tan4phi+720*tan6phi);
 
         const dE = (E-E0), dE2 = dE*dE, dE3 = dE2*dE, dE4 = dE2*dE2, dE5 = dE3*dE2, dE6 = dE4*dE2, dE7 = dE5*dE2;
-        φ = φ - VII*dE2 + VIII*dE4 - IX*dE6;
-        const λ = λ0 + X*dE - XI*dE3 + XII*dE5 - XIIA*dE7;
+        phi = phi - VII*dE2 + VIII*dE4 - IX*dE6;
+        const lambda = lambda0 + X*dE - XI*dE3 + XII*dE5 - XIIA*dE7;
 
-        let point = new LatLon_OsGridRef(φ.toDegrees(), λ.toDegrees(), 0, LatLonEllipsoidal.datums.OSGB36);
+        let point = new LatLon_OsGridRef(phi.toDegrees(), lambda.toDegrees(), 0, LatLonEllipsoidal.datums.OSGB36);
 
         if (datum != LatLonEllipsoidal.datums.OSGB36) {
             // if point is required in datum other than OSGB36, convert it
@@ -264,50 +264,50 @@ class LatLon_OsGridRef extends LatLonEllipsoidal {
      *   const grid = new LatLon(52.65798, 1.71605).toOsGrid(LatLon.datums.OSGB36);
      */
     toOsGrid() {
-        // if necessary convert to OSGB36 first
+        // if necessary convert to OSGB36 prime
         const point = this.datum == LatLonEllipsoidal.datums.OSGB36
             ? this
             : this.convertDatum(LatLonEllipsoidal.datums.OSGB36);
 
-        const φ = point.lat.toRadians();
-        const λ = point.lon.toRadians();
+        const phi = point.lat.toRadians();
+        const lambda = point.lon.toRadians();
 
         const a = 6377563.396, b = 6356256.909;              // Airy 1830 major & minor semi-axes
         const F0 = 0.9996012717;                             // NatGrid scale factor on central meridian
-        const φ0 = (49).toRadians(), λ0 = (-2).toRadians();  // NatGrid true origin is 49°N,2°W
+        const phi0 = (49).toRadians(), lambda0 = (-2).toRadians();  // NatGrid true origin is 49°N,2°W
         const N0 = -100000, E0 = 400000;                     // northing & easting of true origin, metres
         const e2 = 1 - (b*b)/(a*a);                          // eccentricity squared
         const n = (a-b)/(a+b), n2 = n*n, n3 = n*n*n;         // n, n², n³
 
-        const cosφ = Math.cos(φ), sinφ = Math.sin(φ);
-        const ν = a*F0/Math.sqrt(1-e2*sinφ*sinφ);            // nu = transverse radius of curvature
-        const ρ = a*F0*(1-e2)/Math.pow(1-e2*sinφ*sinφ, 1.5); // rho = meridional radius of curvature
-        const η2 = ν/ρ-1;                                    // eta = ?
+        const cosphi = Math.cos(phi), sinphi = Math.sin(phi);
+        const ny = a*F0/Math.sqrt(1-e2*sinphi*sinphi);            // nu = transverse radius of curvature
+        const rho = a*F0*(1-e2)/Math.pow(1-e2*sinphi*sinphi, 1.5); // rho = meridional radius of curvature
+        const eta2 = ny/rho-1;                                    // eta = ?
 
-        const Ma = (1 + n + (5/4)*n2 + (5/4)*n3) * (φ-φ0);
-        const Mb = (3*n + 3*n*n + (21/8)*n3) * Math.sin(φ-φ0) * Math.cos(φ+φ0);
-        const Mc = ((15/8)*n2 + (15/8)*n3) * Math.sin(2*(φ-φ0)) * Math.cos(2*(φ+φ0));
-        const Md = (35/24)*n3 * Math.sin(3*(φ-φ0)) * Math.cos(3*(φ+φ0));
+        const Ma = (1 + n + (5/4)*n2 + (5/4)*n3) * (phi-phi0);
+        const Mb = (3*n + 3*n*n + (21/8)*n3) * Math.sin(phi-phi0) * Math.cos(phi+phi0);
+        const Mc = ((15/8)*n2 + (15/8)*n3) * Math.sin(2*(phi-phi0)) * Math.cos(2*(phi+phi0));
+        const Md = (35/24)*n3 * Math.sin(3*(phi-phi0)) * Math.cos(3*(phi+phi0));
         const M = b * F0 * (Ma - Mb + Mc - Md);              // meridional arc
 
-        const cos3φ = cosφ*cosφ*cosφ;
-        const cos5φ = cos3φ*cosφ*cosφ;
-        const tan2φ = Math.tan(φ)*Math.tan(φ);
-        const tan4φ = tan2φ*tan2φ;
+        const cos3phi = cosphi*cosphi*cosphi;
+        const cos5phi = cos3phi*cosphi*cosphi;
+        const tan2phi = Math.tan(phi)*Math.tan(phi);
+        const tan4phi = tan2phi*tan2phi;
 
         const I = M + N0;
-        const II = (ν/2)*sinφ*cosφ;
-        const III = (ν/24)*sinφ*cos3φ*(5-tan2φ+9*η2);
-        const IIIA = (ν/720)*sinφ*cos5φ*(61-58*tan2φ+tan4φ);
-        const IV = ν*cosφ;
-        const V = (ν/6)*cos3φ*(ν/ρ-tan2φ);
-        const VI = (ν/120) * cos5φ * (5 - 18*tan2φ + tan4φ + 14*η2 - 58*tan2φ*η2);
+        const II = (ny/2)*sinphi*cosphi;
+        const III = (ny/24)*sinphi*cos3phi*(5-tan2phi+9*eta2);
+        const IIIA = (ny/720)*sinphi*cos5phi*(61-58*tan2phi+tan4phi);
+        const IV = ny*cosphi;
+        const V = (ny/6)*cos3phi*(ny/rho-tan2phi);
+        const VI = (ny/120) * cos5phi * (5 - 18*tan2phi + tan4phi + 14*eta2 - 58*tan2phi*eta2);
 
-        const Δλ = λ-λ0;
-        const Δλ2 = Δλ*Δλ, Δλ3 = Δλ2*Δλ, Δλ4 = Δλ3*Δλ, Δλ5 = Δλ4*Δλ, Δλ6 = Δλ5*Δλ;
+        const deltalambda = lambda-lambda0;
+        const deltalambda2 = deltalambda*deltalambda, deltalambda3 = deltalambda2*deltalambda, deltalambda4 = deltalambda3*deltalambda, deltalambda5 = deltalambda4*deltalambda, deltalambda6 = deltalambda5*deltalambda;
 
-        let N = I + II*Δλ2 + III*Δλ4 + IIIA*Δλ6;
-        let E = E0 + IV*Δλ + V*Δλ3 + VI*Δλ5;
+        let N = I + II*deltalambda2 + III*deltalambda4 + IIIA*deltalambda6;
+        let E = E0 + IV*deltalambda + V*deltalambda3 + VI*deltalambda5;
 
         N = Number(N.toFixed(3)); // round to mm precision
         E = Number(E.toFixed(3));
